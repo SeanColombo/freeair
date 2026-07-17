@@ -40,6 +40,7 @@ Testing priority:
 1. Compose UI tests for screens.
 1. Glance widget tests for widget rendering and behavior.
 1. A small number of end-to-end instrumentation tests for integration with Android.
+1. Prefer doing things without extra packages if there's still a clean enough way to do it. We want to minimize the surface of code-updates that will be needed since we want this project to require very little maintenance to stay alive/running/available on app stores as they change requirements (which will likely cause us to have to rebuild the project after months of not seeing it - and I want that to be low-lift).
 
 Avoid putting business logic directly in Activities, Composables, Workers, or Widgets. Keep those layers thin and move logic into testable classes.
 
@@ -72,6 +73,8 @@ Business logic should not depend on Android framework classes whenever possible.
 Favor pure Kotlin classes that can be tested with ordinary JVM tests.
 
 Android framework code should primarily wire together UI, widgets, WorkManager, and repositories.
+
+Monitor data (currently just PurpleAir) is accessed through the supplier-agnostic `AirQualityProvider` interface (`com.seancolombo.freeair.airquality`), not a supplier-specific type directly. Widget/UI/WorkManager code depends only on that interface and the `AirQualityReading`/`AirQualitySensorConfig` domain types, so a different monitor network could be added later as another implementation without touching them. Don't build out multi-supplier selection UI or config until it's actually needed -- the interface boundary is the only thing to keep generic for now.
 
 ## Before considering work complete
 

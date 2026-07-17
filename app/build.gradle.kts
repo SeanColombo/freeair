@@ -1,6 +1,15 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+}
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { load(it) }
+    }
 }
 
 android {
@@ -19,6 +28,18 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Sourced from the gitignored local.properties so real credentials are never committed.
+        buildConfigField(
+            "String",
+            "PURPLEAIR_API_KEY",
+            "\"${localProperties.getProperty("purpleair.apiKey", "")}\"",
+        )
+        buildConfigField(
+            "String",
+            "PURPLEAIR_SENSOR_ID",
+            "\"${localProperties.getProperty("purpleair.sensorId", "")}\"",
+        )
     }
 
     buildTypes {
@@ -34,6 +55,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -47,11 +69,32 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.glance.appwidget)
+    implementation(libs.kotlinx.coroutines.android)
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.org.json)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+}
+
+// Integration tests (e.g. PurpleAirIntegrationTest) hit real external services and only need to
+// run before a commit, not on every build -- see AGENTS.md. They live alongside unit tests but
+// are excluded from testDebugUnitTest and run separately via `./gradlew integrationTest`.
+tasks.withType<Test>().configureEach {
+    if (name.contains("UnitTest")) {
+        exclude("**/*IntegrationTest.class")
+    }
+}
+
+tasks.register<Test>("integrationTest") {
+    group = "verification"
+    description = "Runs integration tests (e.g. against the live PurpleAir API). Run before committing."
+    val unitTestTask = tasks.named<Test>("testDebugUnitTest").get()
+    testClassesDirs = unitTestTask.testClassesDirs
+    classpath = unitTestTask.classpath
+    include("**/*IntegrationTest.class")
 }

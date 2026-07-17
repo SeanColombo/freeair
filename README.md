@@ -7,11 +7,12 @@ PLEASE NOTE: This project is not affiliated with nor endorsed by PurpleAir.
 
 Note to AI:
 * Keep in mind that we want this to support multiple sensors in the future (so someone who owns more than one sensor could have a widget for each one on his screen), so architect in a way to allow that.
+* `PurpleAirWidgetCodeParser` (in `com.seancolombo.freeair.airquality.purpleair`) is intentionally unused right now -- it's the sensor-ID-extraction piece of the "Get the person's sensor ID" setup-flow TODO below, and will get wired up once that UI is built. Don't delete it as dead code.
 
 ## TODO - Initial release
 - [X] Create project and get it running.
 - [X] Get a widget to be extant. Hello World on it.
-- [ ] Wire up Purple Air to make a hardcoded request to get the data we need. If this involves the API key, make sure that isn't committed to the project.
+- [X] Wire up Purple Air to make a hardcoded request to get the data we need. If this involves the API key, make sure that isn't committed to the project.
 - [ ] Once proof-of-concept is done, get it rendering the way we'd expect.
 - [ ] Set the correct update-cadence, caching, etc. behavior and test it.
 - [ ] Pull out any API keys so that we can now commit the rest to github (could just have it in a gitignored file for now).
