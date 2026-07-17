@@ -17,3 +17,12 @@ sealed class FreeAirWidgetState {
 
     data class Error(val message: String) : FreeAirWidgetState()
 }
+
+/** Shared by the reducer (cache fallback) and the in-app preview (read-only, no live fetch). */
+internal fun CachedWidgetReading.toLoadedState(): FreeAirWidgetState.Loaded = FreeAirWidgetState.Loaded(
+    sensorName = sensorName,
+    pm25Aqi = pm25Aqi,
+    category = AqiCategory.forAqi(pm25Aqi),
+    lastUpdated = Instant.ofEpochSecond(lastUpdatedEpochSeconds),
+    mapUrl = mapUrl,
+)

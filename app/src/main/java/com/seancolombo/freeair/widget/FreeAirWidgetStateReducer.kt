@@ -1,10 +1,8 @@
 package com.seancolombo.freeair.widget
 
 import com.seancolombo.freeair.airquality.AirQualityReading
-import com.seancolombo.freeair.airquality.AqiCategory
 import com.seancolombo.freeair.airquality.Pm25AqiCalculator
 import com.seancolombo.freeair.airquality.purpleair.PurpleAirMapUrlBuilder
-import java.time.Instant
 
 /**
  * Combines a fetch attempt with whatever was last cached, deciding both what the widget should
@@ -41,12 +39,4 @@ object FreeAirWidgetStateReducer {
                 }
             },
         )
-
-    private fun CachedWidgetReading.toLoadedState(): FreeAirWidgetState.Loaded = FreeAirWidgetState.Loaded(
-        sensorName = sensorName,
-        pm25Aqi = pm25Aqi,
-        category = AqiCategory.forAqi(pm25Aqi),
-        lastUpdated = Instant.ofEpochSecond(lastUpdatedEpochSeconds),
-        mapUrl = mapUrl,
-    )
 }

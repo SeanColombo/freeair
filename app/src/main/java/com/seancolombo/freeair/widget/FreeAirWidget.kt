@@ -7,11 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.longPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.action.actionStartActivity
@@ -49,41 +45,19 @@ private val backgroundColor = androidx.glance.color.ColorProvider(day = Color(0x
 private val primaryTextColor = androidx.glance.color.ColorProvider(day = Color(0xFF1C1B1F), night = Color(0xFFE6E1E5))
 private val secondaryTextColor = androidx.glance.color.ColorProvider(day = Color(0xFF49454F), night = Color(0xFFCAC4D0))
 
-private val KEY_SENSOR_NAME = stringPreferencesKey("sensor_name")
-private val KEY_PM25_AQI = intPreferencesKey("pm25_aqi")
-private val KEY_LAST_UPDATED_EPOCH_SECONDS = longPreferencesKey("last_updated_epoch_seconds")
-private val KEY_MAP_URL = stringPreferencesKey("map_url")
-
-private fun Preferences.toCachedWidgetReading(): CachedWidgetReading? {
-    val sensorName = this[KEY_SENSOR_NAME] ?: return null
-    val pm25Aqi = this[KEY_PM25_AQI] ?: return null
-    val lastUpdatedEpochSeconds = this[KEY_LAST_UPDATED_EPOCH_SECONDS] ?: return null
-    return CachedWidgetReading(sensorName, pm25Aqi, lastUpdatedEpochSeconds, mapUrl = this[KEY_MAP_URL])
-}
-
-private fun MutablePreferences.putCachedWidgetReading(cached: CachedWidgetReading) {
-    this[KEY_SENSOR_NAME] = cached.sensorName
-    this[KEY_PM25_AQI] = cached.pm25Aqi
-    this[KEY_LAST_UPDATED_EPOCH_SECONDS] = cached.lastUpdatedEpochSeconds
-    if (cached.mapUrl != null) {
-        this[KEY_MAP_URL] = cached.mapUrl
-    } else {
-        this.remove(KEY_MAP_URL)
-    }
-}
-
 class FreeAirWidget(
     private val provider: AirQualityProvider = PurpleAirProvider(),
 ) : GlanceAppWidget() {
     override val stateDefinition = PreferencesGlanceStateDefinition
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val prefs = getAppWidgetState<Preferences>(context, id)
         val config = AirQualitySensorConfig(
             apiKey = BuildConfig.PURPLEAIR_API_KEY,
-            sensorId = BuildConfig.PURPLEAIR_SENSOR_ID,
+            sensorId = prefs.toWidgetSensorConfig().sensorId,
         )
         val fetchResult = provider.fetchReading(config)
-        val cachedReading = getAppWidgetState<Preferences>(context, id).toCachedWidgetReading()
+        val cachedReading = prefs.toCachedWidgetReading()
         val outcome = FreeAirWidgetStateReducer.reduce(fetchResult, cachedReading)
 
         if (outcome.cacheToPersist != null && outcome.cacheToPersist != cachedReading) {
