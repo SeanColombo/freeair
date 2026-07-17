@@ -12,6 +12,7 @@ glanceAppwidget = "1.1.1"
 kotlinxCoroutines = "1.11.0"
 orgJson = "20260522"
 robolectric = "4.16.1"
+workManager = "2.11.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -35,6 +36,7 @@ org-json = { group = "org.json", name = "json", version.ref = "orgJson" }
 androidx-glance-testing = { group = "androidx.glance", name = "glance-testing", version.ref = "glanceAppwidget" }
 androidx-glance-appwidget-testing = { group = "androidx.glance", name = "glance-appwidget-testing", version.ref = "glanceAppwidget" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workManager" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

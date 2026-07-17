@@ -5,11 +5,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.preferences.core.MutablePreferences
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
+import androidx.glance.appwidget.state.getAppWidgetState
+import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
@@ -21,6 +28,7 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
+import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -35,18 +43,43 @@ private val backgroundColor = androidx.glance.color.ColorProvider(day = Color(0x
 private val primaryTextColor = androidx.glance.color.ColorProvider(day = Color(0xFF1C1B1F), night = Color(0xFFE6E1E5))
 private val secondaryTextColor = androidx.glance.color.ColorProvider(day = Color(0xFF49454F), night = Color(0xFFCAC4D0))
 
+private val KEY_SENSOR_NAME = stringPreferencesKey("sensor_name")
+private val KEY_PM25_AQI = intPreferencesKey("pm25_aqi")
+private val KEY_LAST_UPDATED_EPOCH_SECONDS = longPreferencesKey("last_updated_epoch_seconds")
+
+private fun Preferences.toCachedWidgetReading(): CachedWidgetReading? {
+    val sensorName = this[KEY_SENSOR_NAME] ?: return null
+    val pm25Aqi = this[KEY_PM25_AQI] ?: return null
+    val lastUpdatedEpochSeconds = this[KEY_LAST_UPDATED_EPOCH_SECONDS] ?: return null
+    return CachedWidgetReading(sensorName, pm25Aqi, lastUpdatedEpochSeconds)
+}
+
+private fun MutablePreferences.putCachedWidgetReading(cached: CachedWidgetReading) {
+    this[KEY_SENSOR_NAME] = cached.sensorName
+    this[KEY_PM25_AQI] = cached.pm25Aqi
+    this[KEY_LAST_UPDATED_EPOCH_SECONDS] = cached.lastUpdatedEpochSeconds
+}
+
 class FreeAirWidget(
     private val provider: AirQualityProvider = PurpleAirProvider(),
 ) : GlanceAppWidget() {
+    override val stateDefinition = PreferencesGlanceStateDefinition
+
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val config = AirQualitySensorConfig(
             apiKey = BuildConfig.PURPLEAIR_API_KEY,
             sensorId = BuildConfig.PURPLEAIR_SENSOR_ID,
         )
-        val state = provider.fetchReading(config).toWidgetState()
+        val fetchResult = provider.fetchReading(config)
+        val cachedReading = getAppWidgetState<Preferences>(context, id).toCachedWidgetReading()
+        val outcome = FreeAirWidgetStateReducer.reduce(fetchResult, cachedReading)
+
+        if (outcome.cacheToPersist != null && outcome.cacheToPersist != cachedReading) {
+            updateAppWidgetState(context, id) { prefs -> prefs.putCachedWidgetReading(outcome.cacheToPersist) }
+        }
 
         provideContent {
-            WidgetContent(state)
+            WidgetContent(outcome.state)
         }
     }
 }
@@ -103,9 +136,11 @@ private fun LoadedContent(state: FreeAirWidgetState.Loaded) {
                 style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium, color = primaryTextColor),
             )
             Text(
-                text = state.category.label,
-                maxLines = 1,
-                style = TextStyle(fontSize = 11.sp, color = secondaryTextColor),
+                // Wraps onto its own line if "category · time" doesn't fit at minimum widget
+                // size, rather than truncating and hiding the time -- see maxLines.
+                text = "${state.category.label} · ${LastUpdatedTimeFormatter.format(state.lastUpdated)}",
+                maxLines = 2,
+                style = TextStyle(fontSize = 10.sp, color = secondaryTextColor),
             )
         }
     }

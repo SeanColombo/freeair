@@ -14,7 +14,7 @@ Note to AI:
 - [X] Get a widget to be extant. Hello World on it.
 - [X] Wire up Purple Air to make a hardcoded request to get the data we need. If this involves the API key, make sure that isn't committed to the project.
 - [X] Once proof-of-concept is done, get it rendering the way we'd expect.
-- [ ] Set the correct update-cadence, caching, etc. behavior and test it.
+- [X] Set the correct update-cadence, caching, etc. behavior and test it.
 - [X] Pull out any API keys so that we can now commit the rest to github (could just have it in a gitignored file for now).
 - [ ] Create a low-lift setup flow. This will be challenging, make it very clear to the user, and require minimal effort.
   ** Get the person's sensor ID
