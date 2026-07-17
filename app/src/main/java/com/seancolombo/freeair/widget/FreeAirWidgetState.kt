@@ -12,6 +12,7 @@ sealed class FreeAirWidgetState {
         val pm25Aqi: Int,
         val category: AqiCategory,
         val lastUpdated: Instant,
+        val mapUrl: String? = null,
     ) : FreeAirWidgetState()
 
     data class Error(val message: String) : FreeAirWidgetState()

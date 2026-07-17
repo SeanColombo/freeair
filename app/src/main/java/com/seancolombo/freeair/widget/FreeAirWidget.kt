@@ -1,6 +1,8 @@
 package com.seancolombo.freeair.widget
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -12,7 +14,10 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.action.actionStartActivity
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.action.actionStartActivity as actionStartActivityForIntent
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.state.getAppWidgetState
@@ -34,6 +39,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.seancolombo.freeair.BuildConfig
+import com.seancolombo.freeair.MainActivity
 import com.seancolombo.freeair.airquality.AirQualityProvider
 import com.seancolombo.freeair.airquality.AirQualitySensorConfig
 import com.seancolombo.freeair.airquality.RgbColor
@@ -46,18 +52,24 @@ private val secondaryTextColor = androidx.glance.color.ColorProvider(day = Color
 private val KEY_SENSOR_NAME = stringPreferencesKey("sensor_name")
 private val KEY_PM25_AQI = intPreferencesKey("pm25_aqi")
 private val KEY_LAST_UPDATED_EPOCH_SECONDS = longPreferencesKey("last_updated_epoch_seconds")
+private val KEY_MAP_URL = stringPreferencesKey("map_url")
 
 private fun Preferences.toCachedWidgetReading(): CachedWidgetReading? {
     val sensorName = this[KEY_SENSOR_NAME] ?: return null
     val pm25Aqi = this[KEY_PM25_AQI] ?: return null
     val lastUpdatedEpochSeconds = this[KEY_LAST_UPDATED_EPOCH_SECONDS] ?: return null
-    return CachedWidgetReading(sensorName, pm25Aqi, lastUpdatedEpochSeconds)
+    return CachedWidgetReading(sensorName, pm25Aqi, lastUpdatedEpochSeconds, mapUrl = this[KEY_MAP_URL])
 }
 
 private fun MutablePreferences.putCachedWidgetReading(cached: CachedWidgetReading) {
     this[KEY_SENSOR_NAME] = cached.sensorName
     this[KEY_PM25_AQI] = cached.pm25Aqi
     this[KEY_LAST_UPDATED_EPOCH_SECONDS] = cached.lastUpdatedEpochSeconds
+    if (cached.mapUrl != null) {
+        this[KEY_MAP_URL] = cached.mapUrl
+    } else {
+        this.remove(KEY_MAP_URL)
+    }
 }
 
 class FreeAirWidget(
@@ -127,23 +139,47 @@ private fun LoadedContent(state: FreeAirWidgetState.Loaded) {
         modifier = GlanceModifier.fillMaxSize(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AqiBadge(state)
-        Spacer(modifier = GlanceModifier.width(10.dp))
-        Column(modifier = GlanceModifier.fillMaxHeight(), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = state.sensorName,
-                maxLines = 1,
-                style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium, color = primaryTextColor),
-            )
-            Text(
-                // Wraps onto its own line if "category · time" doesn't fit at minimum widget
-                // size, rather than truncating and hiding the time -- see maxLines.
-                text = "${state.category.label} · ${LastUpdatedTimeFormatter.format(state.lastUpdated)}",
-                maxLines = 2,
-                style = TextStyle(fontSize = 10.sp, color = secondaryTextColor),
-            )
+        // Everything except the settings icon opens PurpleAir's map, zoomed to this sensor.
+        val readingModifier = GlanceModifier.defaultWeight().let { modifier ->
+            if (state.mapUrl != null) {
+                modifier.clickable(actionStartActivityForIntent(Intent(Intent.ACTION_VIEW, Uri.parse(state.mapUrl))))
+            } else {
+                modifier
+            }
         }
+        Row(modifier = readingModifier, verticalAlignment = Alignment.CenterVertically) {
+            AqiBadge(state)
+            Spacer(modifier = GlanceModifier.width(10.dp))
+            Column(modifier = GlanceModifier.fillMaxHeight(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = state.sensorName,
+                    maxLines = 1,
+                    style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium, color = primaryTextColor),
+                )
+                Text(
+                    // Wraps onto its own line if "category · time" doesn't fit at minimum
+                    // widget size, rather than truncating and hiding the time -- see maxLines.
+                    text = "${state.category.label} · ${LastUpdatedTimeFormatter.format(state.lastUpdated)}",
+                    maxLines = 2,
+                    style = TextStyle(fontSize = 10.sp, color = secondaryTextColor),
+                )
+            }
+        }
+        SettingsButton()
     }
+}
+
+// Long-pressing a home screen widget is reserved by the launcher for move/resize/remove and
+// can't be intercepted, so this is the way in to the app instead.
+@Composable
+private fun SettingsButton() {
+    Text(
+        text = "⚙",
+        modifier = GlanceModifier
+            .clickable(actionStartActivity<MainActivity>())
+            .padding(start = 8.dp),
+        style = TextStyle(fontSize = 14.sp, color = secondaryTextColor),
+    )
 }
 
 @Composable

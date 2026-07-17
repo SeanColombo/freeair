@@ -14,4 +14,6 @@ data class AirQualityReading(
     val temperatureFahrenheit: Double?,
     val humidityPercent: Int?,
     val lastUpdated: Instant,
+    val latitude: Double?,
+    val longitude: Double?,
 )

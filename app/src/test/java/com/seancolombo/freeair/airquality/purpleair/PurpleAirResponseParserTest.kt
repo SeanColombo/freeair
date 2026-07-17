@@ -18,7 +18,9 @@ class PurpleAirResponseParserTest {
                 "last_seen": 1689999900,
                 "pm2.5": 8.4,
                 "humidity": 45,
-                "temperature": 72
+                "temperature": 72,
+                "latitude": 47.6062,
+                "longitude": -122.3321
               }
             }
         """.trimIndent()
@@ -31,6 +33,8 @@ class PurpleAirResponseParserTest {
         assertEquals(72.0, response.temperatureFahrenheit)
         assertEquals(45, response.humidityPercent)
         assertEquals(1689999900L, response.lastSeenEpochSeconds)
+        assertEquals(47.6062, response.latitude!!, 0.0)
+        assertEquals(-122.3321, response.longitude!!, 0.0)
     }
 
     @Test
@@ -50,5 +54,7 @@ class PurpleAirResponseParserTest {
         assertEquals("", response.name)
         assertNull(response.temperatureFahrenheit)
         assertNull(response.humidityPercent)
+        assertNull(response.latitude)
+        assertNull(response.longitude)
     }
 }

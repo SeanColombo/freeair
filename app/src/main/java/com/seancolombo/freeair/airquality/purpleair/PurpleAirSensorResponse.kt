@@ -8,4 +8,6 @@ data class PurpleAirSensorResponse(
     val temperatureFahrenheit: Double?,
     val humidityPercent: Int?,
     val lastSeenEpochSeconds: Long,
+    val latitude: Double?,
+    val longitude: Double?,
 )

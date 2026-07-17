@@ -6,7 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 private const val SENSORS_ENDPOINT = "https://api.purpleair.com/v1/sensors/"
-private const val REQUESTED_FIELDS = "name,pm2.5,humidity,temperature,last_seen"
+private const val REQUESTED_FIELDS = "name,pm2.5,humidity,temperature,last_seen,latitude,longitude"
 private const val TIMEOUT_MILLIS = 10_000
 
 class RealPurpleAirHttpClient(

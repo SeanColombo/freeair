@@ -15,7 +15,9 @@ private const val SAMPLE_JSON = """
         "last_seen": 1689999900,
         "pm2.5": 8.4,
         "humidity": 45,
-        "temperature": 72
+        "temperature": 72,
+        "latitude": 47.6062,
+        "longitude": -122.3321
       }
     }
 """
@@ -50,6 +52,8 @@ class PurpleAirProviderTest {
         assertEquals(72.0, reading.temperatureFahrenheit)
         assertEquals(45, reading.humidityPercent)
         assertEquals(Instant.ofEpochSecond(1689999900L), reading.lastUpdated)
+        assertEquals(47.6062, reading.latitude!!, 0.0)
+        assertEquals(-122.3321, reading.longitude!!, 0.0)
         assertEquals("12345", httpClient.lastSensorId)
         assertEquals("test-key", httpClient.lastApiKey)
     }

@@ -19,6 +19,8 @@ class PurpleAirProvider(
                 temperatureFahrenheit = response.temperatureFahrenheit,
                 humidityPercent = response.humidityPercent,
                 lastUpdated = Instant.ofEpochSecond(response.lastSeenEpochSeconds),
+                latitude = response.latitude,
+                longitude = response.longitude,
             )
         }
 }

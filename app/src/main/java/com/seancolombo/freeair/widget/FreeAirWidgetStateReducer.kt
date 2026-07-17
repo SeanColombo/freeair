@@ -3,6 +3,7 @@ package com.seancolombo.freeair.widget
 import com.seancolombo.freeair.airquality.AirQualityReading
 import com.seancolombo.freeair.airquality.AqiCategory
 import com.seancolombo.freeair.airquality.Pm25AqiCalculator
+import com.seancolombo.freeair.airquality.purpleair.PurpleAirMapUrlBuilder
 import java.time.Instant
 
 /**
@@ -19,10 +20,16 @@ object FreeAirWidgetStateReducer {
             onSuccess = { reading ->
                 val aqi = Pm25AqiCalculator.calculate(reading.pm25)
                 val sensorName = reading.sensorName.ifBlank { "Sensor ${reading.sensorId}" }
+                val mapUrl = if (reading.latitude != null && reading.longitude != null) {
+                    PurpleAirMapUrlBuilder.build(reading.sensorId, reading.latitude, reading.longitude)
+                } else {
+                    null
+                }
                 val newCache = CachedWidgetReading(
                     sensorName = sensorName,
                     pm25Aqi = aqi,
                     lastUpdatedEpochSeconds = reading.lastUpdated.epochSecond,
+                    mapUrl = mapUrl,
                 )
                 Outcome(newCache.toLoadedState(), newCache)
             },
@@ -40,5 +47,6 @@ object FreeAirWidgetStateReducer {
         pm25Aqi = pm25Aqi,
         category = AqiCategory.forAqi(pm25Aqi),
         lastUpdated = Instant.ofEpochSecond(lastUpdatedEpochSeconds),
+        mapUrl = mapUrl,
     )
 }

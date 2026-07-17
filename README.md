@@ -16,13 +16,15 @@ Note to AI:
 - [X] Once proof-of-concept is done, get it rendering the way we'd expect.
 - [X] Set the correct update-cadence, caching, etc. behavior and test it.
 - [X] Pull out any API keys so that we can now commit the rest to github (could just have it in a gitignored file for now).
+- [X] Figure out if we can make it so that tapping the widget opens up the PurpleAir mobile-web page.
 - [ ] Create a low-lift setup flow. This will be challenging, make it very clear to the user, and require minimal effort.
-  ** Get the person's sensor ID
-** Help the user get an API key from PurpleAir and put it into the app (v1 of this might still be able to be improved with cleverness later).  This should be stored locally for the user.
-- [ ] Figure out if we can make it so that tapping the widget opens up the PurpleAir mobile-web page.
-- [ ] Make it so opening the app, is a very understandable view to see configuration options. It should be designed in a way to accomodate multiple sensors, but still make tons of sense if there's only 1 sensor since that might be the main use-case.
-- [ ] START USING IT & RELEASE IT PUBLICLY
+  - [ ] Get the person's sensor ID
+  - [ ] Help the user get an API key from PurpleAir and put it into the app (v1 of this might still be able to be improved with cleverness later).  This should be stored locally for the user.
+- [ ] Make it so opening the app, is a very understandable view to see configuration options. It should be designed in a way to accommodate multiple sensors, but still make tons of sense if there's only 1 sensor since that might be the main use-case.
+- [ ] RELEASE IT PUBLICLY
 
 ## TODO - Further iteration
 - [ ] Add some page to explain that this is FOSS and where to find the github page
 - [ ] Add support for multiple widgets for multiple sensors
+- [ ] Add really robust handling of errors (like the sensor not getting data anymore, inability to connect to PurpleAir, etc.).
+- [ ] Add options for push notifications when the value changes past a certain threshold (ie: the first time you go over 100 without until you go back below 100 or 90 or something), etc..

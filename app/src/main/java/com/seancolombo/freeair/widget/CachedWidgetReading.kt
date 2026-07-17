@@ -10,4 +10,8 @@ data class CachedWidgetReading(
     val sensorName: String,
     val pm25Aqi: Int,
     val lastUpdatedEpochSeconds: Long,
+    // Nullable both because the sensor might not report a location, and so cached data written
+    // by an older version of the app (before this field existed) still loads instead of being
+    // discarded entirely.
+    val mapUrl: String? = null,
 )

@@ -1,7 +1,12 @@
 package com.seancolombo.freeair.widget
 
+import android.content.Intent
+import android.net.Uri
+import androidx.glance.appwidget.testing.unit.hasStartActivityClickAction
 import androidx.glance.appwidget.testing.unit.runGlanceAppWidgetUnitTest
+import androidx.glance.testing.unit.hasStartActivityClickAction
 import androidx.glance.testing.unit.hasText
+import com.seancolombo.freeair.MainActivity
 import com.seancolombo.freeair.airquality.AqiCategory
 import java.time.Instant
 import org.junit.Test
@@ -61,5 +66,36 @@ class FreeAirWidgetContentTest {
 
         onAllNodes(hasText("295")).assertCountEquals(1)
         onAllNodes(hasText("Very Unhealthy · $formattedLastUpdated")).assertCountEquals(1)
+    }
+
+    @Test
+    fun `a reading with a map url is clickable to PurpleAir's map`() = runGlanceAppWidgetUnitTest {
+        val mapUrl = "https://map.purpleair.com/1/l/m/i/mAQI/a10/p2592000/cC0?select=12345#14.0/47.6062/-122.3321"
+        val state = FreeAirWidgetState.Loaded(
+            sensorName = "Backyard Sensor",
+            pm25Aqi = 71,
+            category = AqiCategory.MODERATE,
+            lastUpdated = lastUpdated,
+            mapUrl = mapUrl,
+        )
+
+        provideComposable { WidgetContent(state) }
+
+        onNode(hasStartActivityClickAction(Intent(Intent.ACTION_VIEW, Uri.parse(mapUrl)))).assertExists()
+    }
+
+    @Test
+    fun `the settings icon opens the app regardless of map url availability`() = runGlanceAppWidgetUnitTest {
+        val state = FreeAirWidgetState.Loaded(
+            sensorName = "Backyard Sensor",
+            pm25Aqi = 71,
+            category = AqiCategory.MODERATE,
+            lastUpdated = lastUpdated,
+            mapUrl = null,
+        )
+
+        provideComposable { WidgetContent(state) }
+
+        onNode(hasStartActivityClickAction<MainActivity>()).assertExists()
     }
 }
