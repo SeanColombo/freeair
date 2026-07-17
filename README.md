@@ -10,7 +10,7 @@ Note to AI:
 
 ## TODO - Initial release
 - [X] Create project and get it running.
-- [ ] Get a widget to be extant. Hello World on it.
+- [X] Get a widget to be extant. Hello World on it.
 - [ ] Wire up Purple Air to make a hardcoded request to get the data we need. If this involves the API key, make sure that isn't committed to the project.
 - [ ] Once proof-of-concept is done, get it rendering the way we'd expect.
 - [ ] Set the correct update-cadence, caching, etc. behavior and test it.
