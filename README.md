@@ -39,13 +39,13 @@ Note to AI:
         app-global setup screen (`ApiKeySetupScreen`/`ApiKeySetupModel`/`ApiKeyStore`) shown in
         place of the sensor-ID form whenever no key has been saved yet -- verifies the key
         against PurpleAir's own "check API key" endpoint before accepting it.
-    - [ ] Entry point to let the user change an already-saved key later. **Note:** when this gets
+    - [X] Entry point to let the user change an already-saved key later. **Note:** when this gets
           built, a widget whose Glance session is still alive when the key changes won't
           reactively pick up the new value -- see the TODO comment in `ApiKeyStore.kt` for why
           (the key lives in a separate DataStore that Glance's `currentState()`/session
           reactivity doesn't observe, unlike per-widget sensor config). Will need the same kind
           of fix as the sensor-ID reactivity fix already in place.
-    - [ ] Entry point in the app's main screen to add a key before any widget triggers the
+    - [X] Entry point in the app's main screen to add a key before any widget triggers the
           setup flow (today it's only reachable via a widget's config screen).
   - [ ] Need to mention how to delete them (ie: just long press on homescreen and remove)? Or have a drag-left option and trash can?
 - [ ] Make it so opening the app, is a very understandable view to see configuration options. It should be designed in a way to accommodate multiple sensors, but still make tons of sense if there's only 1 sensor since that might be the main use-case.

@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -15,9 +16,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -35,11 +41,20 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.seancolombo.freeair.ui.theme.FreeAirTheme
 import com.seancolombo.freeair.widget.AddWidgetCard
+import com.seancolombo.freeair.widget.FreeAirWidgetState
 import com.seancolombo.freeair.widget.WidgetPreview
 import com.seancolombo.freeair.widget.WidgetPreviewItem
 import com.seancolombo.freeair.widget.buildWidgetConfigIntent
+import com.seancolombo.freeair.widget.config.buildApiKeySettingsIntent
 import com.seancolombo.freeair.widget.loadWidgetPreviews
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+// How long we're willing to keep re-checking a freshly configured widget before giving up and
+// leaving whatever state it's in on screen -- comfortably longer than the network timeout the
+// widget's own fetch is bounded by, so a real result almost always arrives before this runs out.
+private const val RELOAD_POLL_INTERVAL_MILLIS = 2_000L
+private const val RELOAD_POLL_MAX_ATTEMPTS = 10
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,7 +62,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             FreeAirTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    topBar = { MainTopAppBar() },
+                ) { innerPadding ->
                     WidgetManagerScreen(modifier = Modifier.padding(innerPadding))
                 }
             }
@@ -55,16 +73,55 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// A plain-text glyph rather than a Material icon, matching how the rest of the app (including
+// the widget itself) uses emoji/text glyphs for iconography instead of pulling in an icons
+// dependency.
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MainTopAppBar() {
+    val context = LocalContext.current
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    TopAppBar(
+        title = { Text("FreeAir") },
+        navigationIcon = {
+            Box {
+                IconButton(onClick = { menuExpanded = true }) {
+                    Text(text = "☰", style = MaterialTheme.typography.titleLarge)
+                }
+                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                    // Works whether or not a key has been saved yet -- re-entering it just
+                    // overwrites the old one. More menu items will land here over time.
+                    DropdownMenuItem(
+                        text = { Text("Update API key") },
+                        onClick = {
+                            menuExpanded = false
+                            context.startActivity(buildApiKeySettingsIntent(context))
+                        },
+                    )
+                }
+            }
+        },
+    )
+}
+
 @Composable
 private fun WidgetManagerScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var widgetStates by remember { mutableStateOf<List<WidgetPreviewItem>>(emptyList()) }
 
-    suspend fun reload() {
-        widgetStates = loadWidgetPreviews(context)
+    // A freshly saved/added widget hasn't fetched yet, so it briefly shows Loading -- keep
+    // re-checking for a bit rather than taking a single snapshot, so the list picks up the result
+    // as soon as it's cached instead of only on the next resume (e.g. leaving and coming back).
+    suspend fun reloadUntilResolved() {
+        repeat(RELOAD_POLL_MAX_ATTEMPTS) { attempt ->
+            widgetStates = loadWidgetPreviews(context)
+            if (widgetStates.none { it.state is FreeAirWidgetState.Loading }) return
+            if (attempt < RELOAD_POLL_MAX_ATTEMPTS - 1) delay(RELOAD_POLL_INTERVAL_MILLIS)
+        }
     }
 
-    LaunchedEffect(Unit) { reload() }
+    LaunchedEffect(Unit) { reloadUntilResolved() }
 
     // Widgets can be added/removed from the home screen while this Activity isn't visible --
     // refresh whenever the user comes back to it so the list doesn't go stale.
@@ -73,7 +130,7 @@ private fun WidgetManagerScreen(modifier: Modifier = Modifier) {
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                coroutineScope.launch { reload() }
+                coroutineScope.launch { reloadUntilResolved() }
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)

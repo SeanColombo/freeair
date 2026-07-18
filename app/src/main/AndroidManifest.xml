@@ -37,6 +37,13 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".widget.config.ApiKeySettingsActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.FreeAir"
+            android:windowSoftInputMode="adjustResize" />
+
         <receiver
             android:name=".widget.FreeAirWidgetReceiver"
             android:exported="false"
