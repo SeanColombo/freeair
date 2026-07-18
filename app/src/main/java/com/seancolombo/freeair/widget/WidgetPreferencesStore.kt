@@ -36,7 +36,10 @@ internal fun MutablePreferences.putCachedWidgetReading(cached: CachedWidgetReadi
     }
 }
 
-// No setter yet -- there's no UI to change a widget's sensor yet, so this only ever reads
-// through to the app-level BuildConfig default until that config UI exists.
+// Falls back to the app-level BuildConfig default until a widget has been configured.
 internal fun Preferences.toWidgetSensorConfig(): WidgetSensorConfig =
     WidgetSensorConfig(sensorId = this[KEY_SENSOR_ID] ?: BuildConfig.PURPLEAIR_SENSOR_ID)
+
+internal fun MutablePreferences.putWidgetSensorConfig(config: WidgetSensorConfig) {
+    this[KEY_SENSOR_ID] = config.sensorId
+}

@@ -26,6 +26,17 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".widget.config.WidgetConfigActivity"
+            android:exported="true"
+            android:label="@string/free_air_widget_label"
+            android:theme="@style/Theme.FreeAir"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
         <receiver
             android:name=".widget.FreeAirWidgetReceiver"
             android:exported="false"

@@ -1,5 +1,6 @@
 package com.seancolombo.freeair
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -34,8 +35,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.seancolombo.freeair.ui.theme.FreeAirTheme
 import com.seancolombo.freeair.widget.AddWidgetCard
-import com.seancolombo.freeair.widget.FreeAirWidgetState
 import com.seancolombo.freeair.widget.WidgetPreview
+import com.seancolombo.freeair.widget.WidgetPreviewItem
+import com.seancolombo.freeair.widget.config.buildWidgetConfigIntent
 import com.seancolombo.freeair.widget.loadWidgetPreviews
 import kotlinx.coroutines.launch
 
@@ -56,7 +58,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun WidgetManagerScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    var widgetStates by remember { mutableStateOf<List<FreeAirWidgetState>>(emptyList()) }
+    var widgetStates by remember { mutableStateOf<List<WidgetPreviewItem>>(emptyList()) }
 
     suspend fun reload() {
         widgetStates = loadWidgetPreviews(context)
@@ -86,14 +88,22 @@ private fun WidgetManagerScreen(modifier: Modifier = Modifier) {
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            items(widgetStates) { state ->
-                WidgetPreview(state = state, modifier = Modifier.fillMaxWidth())
+            items(widgetStates, key = { it.appWidgetId }) { item ->
+                WidgetPreview(
+                    state = item.state,
+                    onClick = { openWidgetConfig(context, item.appWidgetId) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
             item {
                 AddWidgetCard(modifier = Modifier.fillMaxWidth())
             }
         }
     }
+}
+
+private fun openWidgetConfig(context: Context, appWidgetId: Int) {
+    context.startActivity(buildWidgetConfigIntent(context, appWidgetId))
 }
 
 @Composable

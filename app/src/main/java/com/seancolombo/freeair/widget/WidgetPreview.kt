@@ -1,6 +1,7 @@
 package com.seancolombo.freeair.widget
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,8 +28,8 @@ import com.seancolombo.freeair.airquality.RgbColor
  * kept in sync by both reading the same [FreeAirWidgetState].
  */
 @Composable
-fun WidgetPreview(state: FreeAirWidgetState, modifier: Modifier = Modifier) {
-    Card(modifier = modifier) {
+fun WidgetPreview(state: FreeAirWidgetState, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Card(modifier = modifier.clickable(onClick = onClick)) {
         when (state) {
             is FreeAirWidgetState.Loading -> Text(
                 text = "Loading…",
