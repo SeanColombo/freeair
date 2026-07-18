@@ -35,6 +35,8 @@ private class FakePurpleAirHttpClient(
         lastApiKey = apiKey
         return response(sensorId, apiKey)
     }
+
+    override suspend fun checkApiKey(apiKey: String): String = error("not used by this test")
 }
 
 class PurpleAirProviderTest {

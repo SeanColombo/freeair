@@ -3,7 +3,22 @@ at your own devices (that is relevant to API usage limits - you aren't really li
 
 PLEASE NOTE: This project is not affiliated with nor endorsed by PurpleAir.
 
+## Running tests locally
 
+Most tests are plain JVM unit tests and need nothing extra. A couple of tests hit the real
+PurpleAir API to catch drift our unit tests can't (an expired key, a changed response shape,
+etc.) -- see `PurpleAirIntegrationTest`. To run those locally, add your own PurpleAir credentials
+to `local.properties` (gitignored, never committed):
+
+```
+purpleair.apiKey=your-purpleair-api-key
+purpleair.sensorId=a-sensor-id-you-can-read
+```
+
+Without these set, the integration test(s) skip automatically rather than failing. The app
+itself no longer uses a build-time API key at all -- each user enters their own via the in-app
+setup flow (see `ApiKeyStore`) -- `local.properties`'s `purpleair.apiKey` is purely a
+convenience for local test runs and for pre-filling the sensor ID field during development.
 
 Note to AI:
 * Keep in mind that we want this to support multiple sensors in the future (so someone who owns more than one sensor could have a widget for each one on his screen), so architect in a way to allow that.
@@ -20,7 +35,18 @@ Note to AI:
 - [ ] Create a low-lift setup flow. This will be challenging, make it very clear to the user, and require minimal effort.
   - [X] Get the person's sensor ID
     - [ ] Help them find it... picture or something, but behind a "where to look?" link
-  - [ ] Help the user get an API key from PurpleAir and put it into the app (v1 of this might still be able to be improved with cleverness later).  This should be stored locally for the user.
+  - [X] Help the user get an API key from PurpleAir and put it into the app. Built as a one-time,
+        app-global setup screen (`ApiKeySetupScreen`/`ApiKeySetupModel`/`ApiKeyStore`) shown in
+        place of the sensor-ID form whenever no key has been saved yet -- verifies the key
+        against PurpleAir's own "check API key" endpoint before accepting it.
+    - [ ] Entry point to let the user change an already-saved key later. **Note:** when this gets
+          built, a widget whose Glance session is still alive when the key changes won't
+          reactively pick up the new value -- see the TODO comment in `ApiKeyStore.kt` for why
+          (the key lives in a separate DataStore that Glance's `currentState()`/session
+          reactivity doesn't observe, unlike per-widget sensor config). Will need the same kind
+          of fix as the sensor-ID reactivity fix already in place.
+    - [ ] Entry point in the app's main screen to add a key before any widget triggers the
+          setup flow (today it's only reachable via a widget's config screen).
   - [ ] Need to mention how to delete them (ie: just long press on homescreen and remove)? Or have a drag-left option and trash can?
 - [ ] Make it so opening the app, is a very understandable view to see configuration options. It should be designed in a way to accommodate multiple sensors, but still make tons of sense if there's only 1 sensor since that might be the main use-case.
 - [ ] Release polish:

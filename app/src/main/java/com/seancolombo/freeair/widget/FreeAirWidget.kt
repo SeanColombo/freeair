@@ -38,7 +38,6 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import com.seancolombo.freeair.BuildConfig
 import com.seancolombo.freeair.MainActivity
 import com.seancolombo.freeair.airquality.AirQualityProvider
 import com.seancolombo.freeair.airquality.AirQualitySensorConfig
@@ -103,10 +102,22 @@ private fun WidgetEntryPoint(id: GlanceId, appWidgetId: Int, provider: AirQualit
             ?: FreeAirWidgetState.Loading,
         key1 = sensorConfig,
     ) {
-        val config = AirQualitySensorConfig(
-            apiKey = BuildConfig.PURPLEAIR_API_KEY,
-            sensorId = sensorConfig.sensorId,
-        )
+        // The API key lives in a separate, app-global DataStore (see ApiKeyStore) rather than
+        // this widget's own per-instance Preferences, so it isn't reflected by currentState()
+        // the way sensorConfig is. Reading it fresh here (rather than once in provideGlance)
+        // still gets it right the first time through the "add API key -> pick sensor -> save"
+        // flow, since saving the sensor ID is what re-triggers this block and sensorConfig only
+        // transitions from null once that flow's final save has already happened -- by which
+        // point the key is already durably saved. It does NOT yet handle changing the key on an
+        // ALREADY-configured widget while its session stays alive; see the TODO in
+        // ApiKeyStore.kt for why, once that flow gets built.
+        val apiKey = loadApiKey(context)
+        if (apiKey == null) {
+            value = FreeAirWidgetState.NeedsSetup(appWidgetId)
+            return@produceState
+        }
+
+        val config = AirQualitySensorConfig(apiKey = apiKey, sensorId = sensorConfig.sensorId)
         val fetchResult = provider.fetchReading(config)
         val outcome = FreeAirWidgetStateReducer.reduce(fetchResult, cachedReading, sensorConfig.sensorId, appWidgetId)
 

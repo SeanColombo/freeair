@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import com.seancolombo.freeair.widget.WidgetErrorMessageFormatter
+import com.seancolombo.freeair.widget.loadApiKey
 import com.seancolombo.freeair.widget.loadCachedWidgetError
 import com.seancolombo.freeair.widget.loadWidgetSensorConfig
 import com.seancolombo.freeair.widget.saveWidgetSensorConfig
@@ -38,9 +39,40 @@ import kotlinx.coroutines.launch
  * `WidgetConfigActivity`) right after a user drags the widget onto their home screen, and
  * tapping an existing widget's preview card in [com.seancolombo.freeair.MainActivity] opens
  * the same screen in "edit" mode for that instance.
+ *
+ * Shows [ApiKeySetupScreen] first if no PurpleAir API key has been saved yet (app-global, shared
+ * by every widget), then [SensorIdConfigScreen] for the per-widget sensor ID.
  */
 @Composable
 fun WidgetConfigScreen(
+    appWidgetId: Int,
+    onSaved: () -> Unit,
+    onCancelled: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    var hasApiKey by remember { mutableStateOf<Boolean?>(null) }
+
+    LaunchedEffect(Unit) {
+        hasApiKey = loadApiKey(context) != null
+    }
+
+    when (hasApiKey) {
+        null -> Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        false -> ApiKeySetupScreen(onContinue = { hasApiKey = true }, modifier = modifier)
+        true -> SensorIdConfigScreen(
+            appWidgetId = appWidgetId,
+            onSaved = onSaved,
+            onCancelled = onCancelled,
+            modifier = modifier,
+        )
+    }
+}
+
+@Composable
+private fun SensorIdConfigScreen(
     appWidgetId: Int,
     onSaved: () -> Unit,
     onCancelled: () -> Unit,
