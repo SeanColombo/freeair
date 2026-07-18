@@ -27,6 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.glance.appwidget.GlanceAppWidgetManager
+import com.seancolombo.freeair.widget.WidgetErrorMessageFormatter
+import com.seancolombo.freeair.widget.loadCachedWidgetError
 import com.seancolombo.freeair.widget.loadWidgetSensorConfig
 import com.seancolombo.freeair.widget.saveWidgetSensorConfig
 import kotlinx.coroutines.launch
@@ -46,10 +48,13 @@ fun WidgetConfigScreen(
 ) {
     val context = LocalContext.current
     var model by remember { mutableStateOf<WidgetConfigModel?>(null) }
+    var lastErrorMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(appWidgetId) {
         val glanceId = GlanceAppWidgetManager(context).getGlanceIdBy(appWidgetId)
         val currentSensorId = loadWidgetSensorConfig(context, glanceId).sensorId
+        lastErrorMessage = loadCachedWidgetError(context, glanceId)
+            ?.let { WidgetErrorMessageFormatter.format(it.message, currentSensorId) }
         model = WidgetConfigModel(
             initialSensorId = currentSensorId,
             onSave = { config -> saveWidgetSensorConfig(context, glanceId, config) },
@@ -70,6 +75,20 @@ fun WidgetConfigScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(text = "Configure widget", style = MaterialTheme.typography.headlineSmall)
+        lastErrorMessage?.let { message ->
+            Column {
+                Text(
+                    text = "Last error",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                Text(
+                    text = message,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
         OutlinedTextField(
             value = currentModel.sensorId,
             onValueChange = currentModel::onSensorIdChanged,

@@ -8,7 +8,10 @@ import com.seancolombo.freeair.airquality.purpleair.PurpleAirMapUrlBuilder
  * Combines a fetch attempt with whatever was last cached, deciding both what the widget should
  * render and what (if anything) should be persisted. On a failed fetch, falls back to the last
  * known reading rather than going blank -- its own "last updated" time makes the staleness
- * visible, so a transient network blip doesn't hide data the user can still act on.
+ * visible, so a transient network blip doesn't hide data the user can still act on. Callers must
+ * only pass a [cachedReading] that's already confirmed to be for the same sensor as [sensorId] --
+ * see [CachedWidgetReading] -- this reducer doesn't re-check, so a stale reading from a
+ * previously-configured sensor doesn't get misrepresented as current data for a new one.
  */
 object FreeAirWidgetStateReducer {
     data class Outcome(
@@ -36,6 +39,7 @@ object FreeAirWidgetStateReducer {
                     null
                 }
                 val newCache = CachedWidgetReading(
+                    sensorId = sensorId,
                     sensorName = sensorName,
                     pm25Aqi = aqi,
                     lastUpdatedEpochSeconds = reading.lastUpdated.epochSecond,
@@ -52,7 +56,7 @@ object FreeAirWidgetStateReducer {
                     Outcome(
                         FreeAirWidgetState.Error(message, sensorId, appWidgetId),
                         cacheToPersist = null,
-                        errorToPersist = CachedWidgetError(message),
+                        errorToPersist = CachedWidgetError(message, sensorId),
                     )
                 }
             },

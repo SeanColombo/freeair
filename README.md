@@ -18,9 +18,9 @@ Note to AI:
 - [X] Pull out any API keys so that we can now commit the rest to github (could just have it in a gitignored file for now).
 - [X] Figure out if we can make it so that tapping the widget opens up the PurpleAir mobile-web page.
 - [ ] Create a low-lift setup flow. This will be challenging, make it very clear to the user, and require minimal effort.
-  - [ ] Get the person's sensor ID
+  - [X] Get the person's sensor ID
+    - [ ] Help them find it... picture or something, but behind a "where to look?" link
   - [ ] Help the user get an API key from PurpleAir and put it into the app (v1 of this might still be able to be improved with cleverness later).  This should be stored locally for the user.
-  - [ ] If the person adds from home screen and there are any configured widgets, we have to ask them if they want an existing widget, or create a new one. I'm not sure that was in the Plan
   - [ ] Need to mention how to delete them (ie: just long press on homescreen and remove)? Or have a drag-left option and trash can?
 - [ ] Make it so opening the app, is a very understandable view to see configuration options. It should be designed in a way to accommodate multiple sensors, but still make tons of sense if there's only 1 sensor since that might be the main use-case.
 - [ ] Release polish:

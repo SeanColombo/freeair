@@ -28,8 +28,13 @@ suspend fun loadWidgetPreviews(context: Context): List<WidgetPreviewItem> {
         val state = if (sensorConfig == null) {
             FreeAirWidgetState.NeedsSetup(appWidgetId)
         } else {
-            prefs.toCachedWidgetReading()?.toLoadedState()
-                ?: prefs.toCachedWidgetError()?.let { FreeAirWidgetState.Error(it.message, sensorConfig.sensorId, appWidgetId) }
+            // Both only trusted if they match the currently configured sensor -- see WidgetEntryPoint.
+            prefs.toCachedWidgetReading()
+                ?.takeIf { it.sensorId == sensorConfig.sensorId }
+                ?.toLoadedState()
+                ?: prefs.toCachedWidgetError()
+                    ?.takeIf { it.sensorId == sensorConfig.sensorId }
+                    ?.let { FreeAirWidgetState.Error(it.message, sensorConfig.sensorId, appWidgetId) }
                 ?: FreeAirWidgetState.Loading
         }
         WidgetPreviewItem(appWidgetId = appWidgetId, state = state)

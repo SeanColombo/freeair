@@ -9,6 +9,7 @@ class WidgetPreferencesStoreTest {
     @Test
     fun `a cached reading round-trips through preferences`() {
         val cached = CachedWidgetReading(
+            sensorId = "12345",
             sensorName = "Backyard Sensor",
             pm25Aqi = 71,
             lastUpdatedEpochSeconds = 1_000,
@@ -22,7 +23,12 @@ class WidgetPreferencesStoreTest {
 
     @Test
     fun `a null map url round-trips as null, not a missing key`() {
-        val cached = CachedWidgetReading(sensorName = "Backyard Sensor", pm25Aqi = 71, lastUpdatedEpochSeconds = 1_000)
+        val cached = CachedWidgetReading(
+            sensorId = "12345",
+            sensorName = "Backyard Sensor",
+            pm25Aqi = 71,
+            lastUpdatedEpochSeconds = 1_000,
+        )
 
         val prefs = emptyPreferences().toMutablePreferences().apply { putCachedWidgetReading(cached) }
 
@@ -37,6 +43,7 @@ class WidgetPreferencesStoreTest {
     @Test
     fun `an indoor reading round-trips as indoor`() {
         val cached = CachedWidgetReading(
+            sensorId = "12345",
             sensorName = "Living Room Sensor",
             pm25Aqi = 71,
             lastUpdatedEpochSeconds = 1_000,
@@ -46,6 +53,20 @@ class WidgetPreferencesStoreTest {
         val prefs = emptyPreferences().toMutablePreferences().apply { putCachedWidgetReading(cached) }
 
         assertEquals(true, prefs.toCachedWidgetReading()?.isIndoor)
+    }
+
+    @Test
+    fun `a reading's sensorId round-trips through preferences`() {
+        val cached = CachedWidgetReading(
+            sensorId = "183609",
+            sensorName = "Backyard Sensor",
+            pm25Aqi = 71,
+            lastUpdatedEpochSeconds = 1_000,
+        )
+
+        val prefs = emptyPreferences().toMutablePreferences().apply { putCachedWidgetReading(cached) }
+
+        assertEquals("183609", prefs.toCachedWidgetReading()?.sensorId)
     }
 
     @Test
@@ -69,7 +90,7 @@ class WidgetPreferencesStoreTest {
 
     @Test
     fun `a cached error round-trips through preferences`() {
-        val error = CachedWidgetError(message = "HTTP 404: sensor not found")
+        val error = CachedWidgetError(message = "HTTP 404: sensor not found", sensorId = "12345")
 
         val prefs = emptyPreferences().toMutablePreferences().apply { putCachedWidgetError(error) }
 

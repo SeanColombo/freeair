@@ -89,11 +89,14 @@ private fun WidgetEntryPoint(id: GlanceId, appWidgetId: Int, provider: AirQualit
     }
 
     val context = LocalContext.current
-    val cachedReading = prefs.toCachedWidgetReading()
     // Shows whatever the other consumer of this widget's shared cache (the widget itself, or the
     // in-app preview) last found, including a cached failure -- so a 404/etc. doesn't strand the
-    // other surface on "Loading" forever while this fetch is still in flight.
-    val cachedError = prefs.toCachedWidgetError()
+    // other surface on "Loading" forever while this fetch is still in flight. Both only trusted
+    // if they match the sensor currently configured -- otherwise it's a leftover from a sensor ID
+    // the user has since changed away from, and showing it here would misleadingly imply the new,
+    // not-yet-fetched sensor is the one with that reading/error.
+    val cachedReading = prefs.toCachedWidgetReading()?.takeIf { it.sensorId == sensorConfig.sensorId }
+    val cachedError = prefs.toCachedWidgetError()?.takeIf { it.sensorId == sensorConfig.sensorId }
     val state by produceState(
         initialValue = cachedReading?.toLoadedState()
             ?: cachedError?.let { FreeAirWidgetState.Error(it.message, sensorConfig.sensorId, appWidgetId) }

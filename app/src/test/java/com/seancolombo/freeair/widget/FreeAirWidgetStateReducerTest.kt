@@ -40,7 +40,10 @@ class FreeAirWidgetStateReducerTest {
             ),
             outcome.state,
         )
-        assertEquals(CachedWidgetReading("Backyard Sensor", 71, 1_000, expectedMapUrl), outcome.cacheToPersist)
+        assertEquals(
+            CachedWidgetReading(sensorId = "12345", "Backyard Sensor", 71, 1_000, expectedMapUrl),
+            outcome.cacheToPersist,
+        )
     }
 
     @Test
@@ -139,12 +142,17 @@ class FreeAirWidgetStateReducerTest {
             appWidgetId = 42,
         )
 
-        assertEquals(CachedWidgetError("HTTP 404"), outcome.errorToPersist)
+        assertEquals(CachedWidgetError("HTTP 404", sensorId = "12345"), outcome.errorToPersist)
     }
 
     @Test
     fun `a failed fetch that falls back to a cached reading does not persist an error`() {
-        val cached = CachedWidgetReading(sensorName = "Backyard Sensor", pm25Aqi = 42, lastUpdatedEpochSeconds = 500)
+        val cached = CachedWidgetReading(
+            sensorId = "12345",
+            sensorName = "Backyard Sensor",
+            pm25Aqi = 42,
+            lastUpdatedEpochSeconds = 500,
+        )
 
         val outcome = FreeAirWidgetStateReducer.reduce(
             Result.failure(RuntimeException("network down")),
@@ -161,6 +169,7 @@ class FreeAirWidgetStateReducerTest {
     @Test
     fun `a failed fetch with a cache falls back to the last known reading, including its map url`() {
         val cached = CachedWidgetReading(
+            sensorId = "12345",
             sensorName = "Backyard Sensor",
             pm25Aqi = 42,
             lastUpdatedEpochSeconds = 500,
