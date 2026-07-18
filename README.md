@@ -20,11 +20,18 @@ Note to AI:
 - [ ] Create a low-lift setup flow. This will be challenging, make it very clear to the user, and require minimal effort.
   - [ ] Get the person's sensor ID
   - [ ] Help the user get an API key from PurpleAir and put it into the app (v1 of this might still be able to be improved with cleverness later).  This should be stored locally for the user.
+  - [ ] If the person adds from home screen and there are any configured widgets, we have to ask them if they want an existing widget, or create a new one. I'm not sure that was in the Plan
 - [ ] Make it so opening the app, is a very understandable view to see configuration options. It should be designed in a way to accommodate multiple sensors, but still make tons of sense if there's only 1 sensor since that might be the main use-case.
+- [ ] Release polish:
+  - [ ] App icon
+  - [ ] Make Google Play Store account
+  - [ ] About page
 - [ ] RELEASE IT PUBLICLY
 
 ## TODO - Further iteration
 - [ ] Add some page to explain that this is FOSS and where to find the github page
+- [ ] Make the adding experience even better... more like DaysUntil widget app (you can configure in the app first if you'd like)
+- [ ] Long-pressing on the Contacts or TickTick widget gave me a Settings option... how can I get that too? If that's available, I'd prefer it over the gear icon.
 - [ ] Add support for multiple widgets for multiple sensors
 - [ ] Add really robust handling of errors (like the sensor not getting data anymore, inability to connect to PurpleAir, etc.).
 - [ ] Add options for push notifications when the value changes past a certain threshold (ie: the first time you go over 100 without until you go back below 100 or 90 or something), etc..

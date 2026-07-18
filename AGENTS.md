@@ -8,7 +8,7 @@
 - Prioritize battery efficiency and responsiveness.
 - Prefer simple solutions over clever ones.
 - Prefer a clean UI that's easy to understand and use, over adding more additional features while existing ones are unpolished.
-- The widget defaults to a 2x1 grid-cell size and should stay resizable (`resizeMode="horizontal|vertical"`). When resized, keep the content's aspect ratio roughly constant rather than reflowing the layout — extra space should read as padding around the same design, not a different design.
+- The widget defaults to a 3x1 grid-cell size (`targetCellWidth`/`targetCellHeight`) but can be resized down to 2x1 (`minWidth`/`minHeight` set below the target, with `minResizeWidth`/`minResizeHeight` as the floor) and should stay resizable (`resizeMode="horizontal|vertical"`). When resized, keep the content's aspect ratio roughly constant rather than reflowing the layout — extra space should read as padding around the same design, not a different design.
 
 ## Technology
 

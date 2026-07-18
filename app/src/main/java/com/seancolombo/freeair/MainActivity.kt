@@ -7,8 +7,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -31,6 +33,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.seancolombo.freeair.ui.theme.FreeAirTheme
+import com.seancolombo.freeair.widget.AddWidgetCard
 import com.seancolombo.freeair.widget.FreeAirWidgetState
 import com.seancolombo.freeair.widget.WidgetPreview
 import com.seancolombo.freeair.widget.loadWidgetPreviews
@@ -86,6 +89,9 @@ private fun WidgetManagerScreen(modifier: Modifier = Modifier) {
             items(widgetStates) { state ->
                 WidgetPreview(state = state, modifier = Modifier.fillMaxWidth())
             }
+            item {
+                AddWidgetCard(modifier = Modifier.fillMaxWidth())
+            }
         }
     }
 }
@@ -106,5 +112,7 @@ private fun EmptyState(modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        Spacer(modifier = Modifier.height(16.dp))
+        AddWidgetCard(modifier = Modifier.fillMaxWidth())
     }
 }
