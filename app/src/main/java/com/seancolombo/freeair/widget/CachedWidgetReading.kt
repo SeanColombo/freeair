@@ -14,4 +14,6 @@ data class CachedWidgetReading(
     // by an older version of the app (before this field existed) still loads instead of being
     // discarded entirely.
     val mapUrl: String? = null,
+    // Defaults to false (outside) so cached data written before this field existed still loads.
+    val isIndoor: Boolean = false,
 )

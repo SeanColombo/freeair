@@ -2,6 +2,7 @@ package com.seancolombo.freeair.widget
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,9 +38,28 @@ fun WidgetPreview(state: FreeAirWidgetState, onClick: () -> Unit, modifier: Modi
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
+            is FreeAirWidgetState.NeedsSetup -> Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(text = "👉")
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(text = "Tap to set up", fontWeight = FontWeight.Medium)
+                    Text(
+                        text = "Choose a sensor to show",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+
             is FreeAirWidgetState.Error -> Column(modifier = Modifier.padding(16.dp)) {
                 Text(text = "Unable to load air quality", fontWeight = FontWeight.Medium)
-                Text(text = state.message, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text = WidgetErrorMessageFormatter.format(state.message, state.sensorId),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
 
             is FreeAirWidgetState.Loaded -> LoadedPreview(state)
@@ -53,17 +73,26 @@ private fun LoadedPreview(state: FreeAirWidgetState.Loaded) {
         modifier = Modifier.padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // The outer box is always 48.dp, indoor or not, so a sensor being indoor doesn't shift
+        // the rest of the row -- the ring reads as an inset border rather than a bigger badge.
         Box(
             modifier = Modifier
                 .size(48.dp)
-                .background(state.category.backgroundColor.toComposeColor(), CircleShape),
+                .background(if (state.isIndoor) indoorRingColor() else state.category.backgroundColor.toComposeColor(), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = state.pm25Aqi.toString(),
-                color = state.category.contentColor.toComposeColor(),
-                fontWeight = FontWeight.Bold,
-            )
+            Box(
+                modifier = Modifier
+                    .size(if (state.isIndoor) 42.dp else 48.dp)
+                    .background(state.category.backgroundColor.toComposeColor(), CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = state.pm25Aqi.toString(),
+                    color = state.category.contentColor.toComposeColor(),
+                    fontWeight = FontWeight.Bold,
+                )
+            }
         }
         Spacer(modifier = Modifier.width(12.dp))
         Column {
@@ -78,3 +107,10 @@ private fun LoadedPreview(state: FreeAirWidgetState.Loaded) {
 }
 
 private fun RgbColor.toComposeColor(): Color = Color(red, green, blue)
+
+// Matches the PurpleAir app's own convention: a ring around an indoor sensor's AQI circle,
+// since indoor readings aren't directly comparable to the outdoor air quality the category
+// colors are calibrated for. Black reads clearly against the light AQI colors in light mode;
+// a near-white ring keeps the same legibility against the app's dark background at night.
+@Composable
+private fun indoorRingColor(): Color = if (isSystemInDarkTheme()) Color(0xFFE0E0E0) else Color(0xFF000000)

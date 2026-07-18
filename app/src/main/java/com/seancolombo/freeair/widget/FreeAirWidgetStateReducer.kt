@@ -11,9 +11,21 @@ import com.seancolombo.freeair.airquality.purpleair.PurpleAirMapUrlBuilder
  * visible, so a transient network blip doesn't hide data the user can still act on.
  */
 object FreeAirWidgetStateReducer {
-    data class Outcome(val state: FreeAirWidgetState, val cacheToPersist: CachedWidgetReading?)
+    data class Outcome(
+        val state: FreeAirWidgetState,
+        val cacheToPersist: CachedWidgetReading?,
+        // Only ever set alongside an Error state with no cached reading to fall back to -- see
+        // CachedWidgetError. Lets the in-app preview (which never fetches on its own) show the
+        // same failure the widget hit, instead of being stuck on "Loading" forever.
+        val errorToPersist: CachedWidgetError? = null,
+    )
 
-    fun reduce(fetchResult: Result<AirQualityReading>, cachedReading: CachedWidgetReading?): Outcome =
+    fun reduce(
+        fetchResult: Result<AirQualityReading>,
+        cachedReading: CachedWidgetReading?,
+        sensorId: String,
+        appWidgetId: Int,
+    ): Outcome =
         fetchResult.fold(
             onSuccess = { reading ->
                 val aqi = Pm25AqiCalculator.calculate(reading.pm25)
@@ -28,6 +40,7 @@ object FreeAirWidgetStateReducer {
                     pm25Aqi = aqi,
                     lastUpdatedEpochSeconds = reading.lastUpdated.epochSecond,
                     mapUrl = mapUrl,
+                    isIndoor = reading.isIndoor,
                 )
                 Outcome(newCache.toLoadedState(), newCache)
             },
@@ -35,7 +48,12 @@ object FreeAirWidgetStateReducer {
                 if (cachedReading != null) {
                     Outcome(cachedReading.toLoadedState(), cachedReading)
                 } else {
-                    Outcome(FreeAirWidgetState.Error(error.message ?: "Unable to load sensor data"), null)
+                    val message = error.message ?: "Unable to load sensor data"
+                    Outcome(
+                        FreeAirWidgetState.Error(message, sensorId, appWidgetId),
+                        cacheToPersist = null,
+                        errorToPersist = CachedWidgetError(message),
+                    )
                 }
             },
         )

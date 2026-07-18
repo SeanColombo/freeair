@@ -15,6 +15,9 @@ object PurpleAirResponseParser {
             lastSeenEpochSeconds = sensor.getLong("last_seen"),
             latitude = if (sensor.has("latitude")) sensor.getDouble("latitude") else null,
             longitude = if (sensor.has("longitude")) sensor.getDouble("longitude") else null,
+            // Defaults to outside if missing, rather than failing -- an older cached response or
+            // a future API change shouldn't break parsing over a field that's purely cosmetic.
+            isIndoor = sensor.optInt("location_type", 0) == 1,
         )
     }
 }

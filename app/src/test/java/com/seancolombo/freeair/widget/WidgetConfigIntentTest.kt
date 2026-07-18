@@ -1,13 +1,14 @@
-package com.seancolombo.freeair.widget.config
+package com.seancolombo.freeair.widget
 
 import android.appwidget.AppWidgetManager
+import com.seancolombo.freeair.widget.config.WidgetConfigActivity
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 
-/** Covers MainActivity's tap-to-edit: the Intent it hands to startActivity must be correct. */
+/** Covers MainActivity's tap-to-edit and the widget's own tap-to-set-up action. */
 @RunWith(RobolectricTestRunner::class)
 class WidgetConfigIntentTest {
     @Test

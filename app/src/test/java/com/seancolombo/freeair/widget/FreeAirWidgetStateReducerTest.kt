@@ -19,9 +19,15 @@ class FreeAirWidgetStateReducerTest {
             lastUpdated = Instant.ofEpochSecond(1_000),
             latitude = 47.6062,
             longitude = -122.3321,
+            isIndoor = false,
         )
 
-        val outcome = FreeAirWidgetStateReducer.reduce(Result.success(reading), cachedReading = null)
+        val outcome = FreeAirWidgetStateReducer.reduce(
+            Result.success(reading),
+            cachedReading = null,
+            sensorId = "12345",
+            appWidgetId = 42,
+        )
 
         val expectedMapUrl = "https://map.purpleair.com/1/l/m/i/mAQI/a10/p2592000/cC0?select=12345#14.0/47.6062/-122.3321"
         assertEquals(
@@ -48,9 +54,15 @@ class FreeAirWidgetStateReducerTest {
             lastUpdated = Instant.EPOCH,
             latitude = null,
             longitude = null,
+            isIndoor = false,
         )
 
-        val outcome = FreeAirWidgetStateReducer.reduce(Result.success(reading), cachedReading = null)
+        val outcome = FreeAirWidgetStateReducer.reduce(
+            Result.success(reading),
+            cachedReading = null,
+            sensorId = "12345",
+            appWidgetId = 42,
+        )
 
         assertNull((outcome.state as FreeAirWidgetState.Loaded).mapUrl)
         assertNull(outcome.cacheToPersist?.mapUrl)
@@ -67,22 +79,83 @@ class FreeAirWidgetStateReducerTest {
             lastUpdated = Instant.EPOCH,
             latitude = null,
             longitude = null,
+            isIndoor = false,
         )
 
-        val outcome = FreeAirWidgetStateReducer.reduce(Result.success(reading), cachedReading = null)
+        val outcome = FreeAirWidgetStateReducer.reduce(
+            Result.success(reading),
+            cachedReading = null,
+            sensorId = "12345",
+            appWidgetId = 42,
+        )
 
         assertEquals("Sensor 12345", (outcome.state as FreeAirWidgetState.Loaded).sensorName)
     }
 
     @Test
-    fun `a failed fetch with no cache maps to Error with the failure message`() {
+    fun `an indoor sensor's reading is marked indoor in both the rendered state and the cache`() {
+        val reading = AirQualityReading(
+            sensorId = "12345",
+            sensorName = "Living Room Sensor",
+            pm25 = 20.0,
+            temperatureFahrenheit = null,
+            humidityPercent = null,
+            lastUpdated = Instant.EPOCH,
+            latitude = null,
+            longitude = null,
+            isIndoor = true,
+        )
+
+        val outcome = FreeAirWidgetStateReducer.reduce(
+            Result.success(reading),
+            cachedReading = null,
+            sensorId = "12345",
+            appWidgetId = 42,
+        )
+
+        assertEquals(true, (outcome.state as FreeAirWidgetState.Loaded).isIndoor)
+        assertEquals(true, outcome.cacheToPersist?.isIndoor)
+    }
+
+    @Test
+    fun `a failed fetch with no cache maps to Error with the raw failure message, sensor id, and widget id`() {
         val outcome = FreeAirWidgetStateReducer.reduce(
             Result.failure(RuntimeException("network down")),
             cachedReading = null,
+            sensorId = "12345",
+            appWidgetId = 42,
         )
 
-        assertEquals(FreeAirWidgetState.Error("network down"), outcome.state)
+        assertEquals(FreeAirWidgetState.Error("network down", sensorId = "12345", appWidgetId = 42), outcome.state)
         assertNull(outcome.cacheToPersist)
+    }
+
+    @Test
+    fun `a failed fetch with no cache also produces an error to persist, for the in-app preview to share`() {
+        val outcome = FreeAirWidgetStateReducer.reduce(
+            Result.failure(RuntimeException("HTTP 404")),
+            cachedReading = null,
+            sensorId = "12345",
+            appWidgetId = 42,
+        )
+
+        assertEquals(CachedWidgetError("HTTP 404"), outcome.errorToPersist)
+    }
+
+    @Test
+    fun `a failed fetch that falls back to a cached reading does not persist an error`() {
+        val cached = CachedWidgetReading(sensorName = "Backyard Sensor", pm25Aqi = 42, lastUpdatedEpochSeconds = 500)
+
+        val outcome = FreeAirWidgetStateReducer.reduce(
+            Result.failure(RuntimeException("network down")),
+            cachedReading = cached,
+            sensorId = "12345",
+            appWidgetId = 42,
+        )
+
+        // We have a good reading to fall back to, so there's no reason to shadow it with an
+        // error -- the in-app preview should keep showing that reading too.
+        assertNull(outcome.errorToPersist)
     }
 
     @Test
@@ -97,6 +170,8 @@ class FreeAirWidgetStateReducerTest {
         val outcome = FreeAirWidgetStateReducer.reduce(
             Result.failure(RuntimeException("network down")),
             cachedReading = cached,
+            sensorId = "12345",
+            appWidgetId = 42,
         )
 
         assertEquals(

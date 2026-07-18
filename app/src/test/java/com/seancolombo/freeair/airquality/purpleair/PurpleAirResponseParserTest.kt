@@ -1,7 +1,9 @@
 package com.seancolombo.freeair.airquality.purpleair
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PurpleAirResponseParserTest {
@@ -20,7 +22,8 @@ class PurpleAirResponseParserTest {
                 "humidity": 45,
                 "temperature": 72,
                 "latitude": 47.6062,
-                "longitude": -122.3321
+                "longitude": -122.3321,
+                "location_type": 0
               }
             }
         """.trimIndent()
@@ -35,6 +38,7 @@ class PurpleAirResponseParserTest {
         assertEquals(1689999900L, response.lastSeenEpochSeconds)
         assertEquals(47.6062, response.latitude!!, 0.0)
         assertEquals(-122.3321, response.longitude!!, 0.0)
+        assertFalse(response.isIndoor)
     }
 
     @Test
@@ -56,5 +60,40 @@ class PurpleAirResponseParserTest {
         assertNull(response.humidityPercent)
         assertNull(response.latitude)
         assertNull(response.longitude)
+    }
+
+    @Test
+    fun `a missing location_type defaults to outside, not indoor`() {
+        val json = """
+            {
+              "sensor": {
+                "sensor_index": 12345,
+                "last_seen": 1689999900,
+                "pm2.5": 8.4
+              }
+            }
+        """.trimIndent()
+
+        val response = PurpleAirResponseParser.parse(json)
+
+        assertFalse(response.isIndoor)
+    }
+
+    @Test
+    fun `a location_type of 1 means the sensor is indoor`() {
+        val json = """
+            {
+              "sensor": {
+                "sensor_index": 12345,
+                "last_seen": 1689999900,
+                "pm2.5": 8.4,
+                "location_type": 1
+              }
+            }
+        """.trimIndent()
+
+        val response = PurpleAirResponseParser.parse(json)
+
+        assertTrue(response.isIndoor)
     }
 }

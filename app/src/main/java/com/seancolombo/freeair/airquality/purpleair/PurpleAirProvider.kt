@@ -21,6 +21,7 @@ class PurpleAirProvider(
                 lastUpdated = Instant.ofEpochSecond(response.lastSeenEpochSeconds),
                 latitude = response.latitude,
                 longitude = response.longitude,
+                isIndoor = response.isIndoor,
             )
         }
 }

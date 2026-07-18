@@ -12,6 +12,7 @@ import java.time.Instant
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 
 @RunWith(RobolectricTestRunner::class)
 class FreeAirWidgetContentTest {
@@ -29,12 +30,51 @@ class FreeAirWidgetContentTest {
     }
 
     @Test
-    fun `error state shows a message and the underlying failure reason`() = runGlanceAppWidgetUnitTest {
-        provideComposable { WidgetContent(FreeAirWidgetState.Error("boom")) }
+    fun `needs-setup state shows a tap-to-configure prompt clickable to WidgetConfigActivity`() =
+        runGlanceAppWidgetUnitTest {
+            // NeedsSetupContent reads LocalContext.current (to build the config Intent), which
+            // this test harness doesn't populate by default -- set it explicitly.
+            setContext(RuntimeEnvironment.getApplication())
 
-        onAllNodes(hasText("Unable to load air quality")).assertCountEquals(1)
-        onAllNodes(hasText("boom")).assertCountEquals(1)
-    }
+            provideComposable { WidgetContent(FreeAirWidgetState.NeedsSetup(appWidgetId = 42)) }
+
+            onAllNodes(hasText("Tap to set up")).assertCountEquals(1)
+            onAllNodes(hasText("Choose a sensor to show")).assertCountEquals(1)
+            val expectedIntent = buildWidgetConfigIntent(RuntimeEnvironment.getApplication(), appWidgetId = 42)
+            onNode(hasStartActivityClickAction(expectedIntent)).assertExists()
+        }
+
+    @Test
+    fun `error state shows a message, the underlying failure reason, and is clickable to config`() =
+        runGlanceAppWidgetUnitTest {
+            // ErrorContent reads LocalContext.current (to build the config Intent), which this
+            // test harness doesn't populate by default -- set it explicitly.
+            setContext(RuntimeEnvironment.getApplication())
+
+            provideComposable { WidgetContent(FreeAirWidgetState.Error("boom", sensorId = "12345", appWidgetId = 42)) }
+
+            onAllNodes(hasText("Unable to load air quality")).assertCountEquals(1)
+            // Unrecognized errors render as-is, raw -- see WidgetErrorMessageFormatter.
+            onAllNodes(hasText("boom")).assertCountEquals(1)
+            // A bad sensor ID is the most common cause of an error, so let the user fix it
+            // straight from the widget instead of stranding them with no way forward.
+            val expectedIntent = buildWidgetConfigIntent(RuntimeEnvironment.getApplication(), appWidgetId = 42)
+            onNode(hasStartActivityClickAction(expectedIntent)).assertExists()
+        }
+
+    @Test
+    fun `a not-found error renders a human-readable message instead of the raw API response`() =
+        runGlanceAppWidgetUnitTest {
+            setContext(RuntimeEnvironment.getApplication())
+            val rawMessage = "PurpleAir API request failed with HTTP 404: " +
+                "{ \"error\" : \"NotFoundError\", \"description\" : \"Cannot find a sensor with the provided parameters.\" }"
+
+            provideComposable {
+                WidgetContent(FreeAirWidgetState.Error(rawMessage, sensorId = "12345", appWidgetId = 42))
+            }
+
+            onAllNodes(hasText("Error: Sensor ID 12345 not found.")).assertCountEquals(1)
+        }
 
     @Test
     fun `loaded state shows the sensor name, AQI value, and last-updated time`() =
@@ -66,6 +106,24 @@ class FreeAirWidgetContentTest {
 
         onAllNodes(hasText("295")).assertCountEquals(1)
         onAllNodes(hasText("Very Unhealthy · $formattedLastUpdated")).assertCountEquals(1)
+    }
+
+    @Test
+    fun `an indoor sensor's reading still renders its AQI and name correctly`() = runGlanceAppWidgetUnitTest {
+        val state = FreeAirWidgetState.Loaded(
+            sensorName = "Living Room Sensor",
+            pm25Aqi = 71,
+            category = AqiCategory.MODERATE,
+            lastUpdated = lastUpdated,
+            isIndoor = true,
+        )
+
+        provideComposable { WidgetContent(state) }
+
+        onAllNodes(hasText("Living Room Sensor")).assertCountEquals(1)
+        onAllNodes(hasText("71")).assertCountEquals(1)
+        // The indoor ring itself (see AqiBadge) is a background-color/size difference this
+        // text-based test harness can't assert on -- verified manually on-emulator instead.
     }
 
     @Test

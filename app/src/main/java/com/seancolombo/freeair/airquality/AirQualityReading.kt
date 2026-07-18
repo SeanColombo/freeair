@@ -16,4 +16,5 @@ data class AirQualityReading(
     val lastUpdated: Instant,
     val latitude: Double?,
     val longitude: Double?,
+    val isIndoor: Boolean,
 )

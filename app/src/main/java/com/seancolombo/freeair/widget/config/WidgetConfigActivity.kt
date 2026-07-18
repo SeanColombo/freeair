@@ -1,7 +1,6 @@
 package com.seancolombo.freeair.widget.config
 
 import android.appwidget.AppWidgetManager
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -12,11 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import com.seancolombo.freeair.ui.theme.FreeAirTheme
-
-/** Used by MainActivity's tap-to-edit; pulled out so the exact Intent shape is unit testable. */
-fun buildWidgetConfigIntent(context: Context, appWidgetId: Int): Intent =
-    Intent(context, WidgetConfigActivity::class.java)
-        .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
 /**
  * Launched two ways: by the system right after a user drags the widget onto their home screen

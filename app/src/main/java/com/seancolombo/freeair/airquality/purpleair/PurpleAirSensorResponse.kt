@@ -10,4 +10,6 @@ data class PurpleAirSensorResponse(
     val lastSeenEpochSeconds: Long,
     val latitude: Double?,
     val longitude: Double?,
+    // PurpleAir's location_type: 0 = outside, 1 = inside.
+    val isIndoor: Boolean,
 )

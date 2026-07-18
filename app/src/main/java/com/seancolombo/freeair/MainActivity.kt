@@ -37,7 +37,7 @@ import com.seancolombo.freeair.ui.theme.FreeAirTheme
 import com.seancolombo.freeair.widget.AddWidgetCard
 import com.seancolombo.freeair.widget.WidgetPreview
 import com.seancolombo.freeair.widget.WidgetPreviewItem
-import com.seancolombo.freeair.widget.config.buildWidgetConfigIntent
+import com.seancolombo.freeair.widget.buildWidgetConfigIntent
 import com.seancolombo.freeair.widget.loadWidgetPreviews
 import kotlinx.coroutines.launch
 

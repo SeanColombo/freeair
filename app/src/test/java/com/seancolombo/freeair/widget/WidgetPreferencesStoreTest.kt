@@ -35,9 +35,44 @@ class WidgetPreferencesStoreTest {
     }
 
     @Test
-    fun `sensor config falls back to the BuildConfig default when unset`() {
-        val config = emptyPreferences().toWidgetSensorConfig()
+    fun `an indoor reading round-trips as indoor`() {
+        val cached = CachedWidgetReading(
+            sensorName = "Living Room Sensor",
+            pm25Aqi = 71,
+            lastUpdatedEpochSeconds = 1_000,
+            isIndoor = true,
+        )
 
-        assertEquals(com.seancolombo.freeair.BuildConfig.PURPLEAIR_SENSOR_ID, config.sensorId)
+        val prefs = emptyPreferences().toMutablePreferences().apply { putCachedWidgetReading(cached) }
+
+        assertEquals(true, prefs.toCachedWidgetReading()?.isIndoor)
+    }
+
+    @Test
+    fun `sensor config is null when never configured -- no silent default`() {
+        assertNull(emptyPreferences().toWidgetSensorConfig())
+    }
+
+    @Test
+    fun `a saved sensor config round-trips through preferences`() {
+        val config = WidgetSensorConfig(sensorId = "183609")
+
+        val prefs = emptyPreferences().toMutablePreferences().apply { putWidgetSensorConfig(config) }
+
+        assertEquals(config, prefs.toWidgetSensorConfig())
+    }
+
+    @Test
+    fun `no cached error when never written`() {
+        assertNull(emptyPreferences().toCachedWidgetError())
+    }
+
+    @Test
+    fun `a cached error round-trips through preferences`() {
+        val error = CachedWidgetError(message = "HTTP 404: sensor not found")
+
+        val prefs = emptyPreferences().toMutablePreferences().apply { putCachedWidgetError(error) }
+
+        assertEquals(error, prefs.toCachedWidgetError())
     }
 }

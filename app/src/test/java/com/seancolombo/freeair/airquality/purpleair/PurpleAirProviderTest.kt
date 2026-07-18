@@ -4,6 +4,7 @@ import com.seancolombo.freeair.airquality.AirQualitySensorConfig
 import java.time.Instant
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -17,7 +18,8 @@ private const val SAMPLE_JSON = """
         "humidity": 45,
         "temperature": 72,
         "latitude": 47.6062,
-        "longitude": -122.3321
+        "longitude": -122.3321,
+        "location_type": 1
       }
     }
 """
@@ -54,8 +56,31 @@ class PurpleAirProviderTest {
         assertEquals(Instant.ofEpochSecond(1689999900L), reading.lastUpdated)
         assertEquals(47.6062, reading.latitude!!, 0.0)
         assertEquals(-122.3321, reading.longitude!!, 0.0)
+        assertTrue(reading.isIndoor)
         assertEquals("12345", httpClient.lastSensorId)
         assertEquals("test-key", httpClient.lastApiKey)
+    }
+
+    @Test
+    fun `an outdoor sensor's location_type maps to isIndoor false`() = runTest {
+        val outdoorJson = """
+            {
+              "sensor": {
+                "sensor_index": 12345,
+                "name": "Backyard Sensor",
+                "last_seen": 1689999900,
+                "pm2.5": 8.4,
+                "location_type": 0
+              }
+            }
+        """
+        val httpClient = FakePurpleAirHttpClient { _, _ -> outdoorJson }
+        val provider = PurpleAirProvider(httpClient)
+        val config = AirQualitySensorConfig(apiKey = "test-key", sensorId = "12345")
+
+        val result = provider.fetchReading(config)
+
+        assertFalse(result.getOrThrow().isIndoor)
     }
 
     @Test
