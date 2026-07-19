@@ -76,6 +76,18 @@ Android framework code should primarily wire together UI, widgets, WorkManager, 
 
 Monitor data (currently just PurpleAir) is accessed through the supplier-agnostic `AirQualityProvider` interface (`com.seancolombo.freeair.airquality`), not a supplier-specific type directly. Widget/UI/WorkManager code depends only on that interface and the `AirQualityReading`/`AirQualitySensorConfig` domain types, so a different monitor network could be added later as another implementation without touching them. Don't build out multi-supplier selection UI or config until it's actually needed -- the interface boundary is the only thing to keep generic for now.
 
+## Versioning
+
+The app version lives in `app/build.gradle.kts` (`versionCode`, `versionName`). `versionName`
+follows `MAJOR.MINOR.PATCH`.
+
+- Small changes (bug fixes, tweaks, polish): bump PATCH automatically, no need to ask.
+- Changes that add significant new functionality (a new feature, screen, or flow): ask the user
+  whether to bump MINOR before proceeding, rather than assuming.
+- MAJOR is only bumped when the user explicitly asks for it.
+- Whenever `versionName` changes, also increment `versionCode` by 1 (Play Store requires it to
+  strictly increase release over release).
+
 ## Before considering work complete
 
 - Build succeeds.

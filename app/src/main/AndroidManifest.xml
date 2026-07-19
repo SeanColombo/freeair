@@ -44,6 +44,11 @@
             android:theme="@style/Theme.FreeAir"
             android:windowSoftInputMode="adjustResize" />
 
+        <activity
+            android:name=".about.AboutActivity"
+            android:exported="false"
+            android:theme="@style/Theme.FreeAir" />
+
         <receiver
             android:name=".widget.FreeAirWidgetReceiver"
             android:exported="false"

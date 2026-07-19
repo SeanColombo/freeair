@@ -6,7 +6,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -16,14 +15,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -39,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.seancolombo.freeair.ui.AppTopBar
 import com.seancolombo.freeair.ui.theme.FreeAirTheme
 import com.seancolombo.freeair.widget.AddWidgetCard
 import com.seancolombo.freeair.widget.FreeAirWidgetState
@@ -64,45 +59,13 @@ class MainActivity : ComponentActivity() {
             FreeAirTheme {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    topBar = { MainTopAppBar() },
+                    topBar = { AppTopBar() },
                 ) { innerPadding ->
                     WidgetManagerScreen(modifier = Modifier.padding(innerPadding))
                 }
             }
         }
     }
-}
-
-// A plain-text glyph rather than a Material icon, matching how the rest of the app (including
-// the widget itself) uses emoji/text glyphs for iconography instead of pulling in an icons
-// dependency.
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun MainTopAppBar() {
-    val context = LocalContext.current
-    var menuExpanded by remember { mutableStateOf(false) }
-
-    TopAppBar(
-        title = { Text("FreeAir") },
-        navigationIcon = {
-            Box {
-                IconButton(onClick = { menuExpanded = true }) {
-                    Text(text = "☰", style = MaterialTheme.typography.titleLarge)
-                }
-                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                    // Works whether or not a key has been saved yet -- re-entering it just
-                    // overwrites the old one. More menu items will land here over time.
-                    DropdownMenuItem(
-                        text = { Text("Update API key") },
-                        onClick = {
-                            menuExpanded = false
-                            context.startActivity(buildApiKeySettingsIntent(context))
-                        },
-                    )
-                }
-            }
-        },
-    )
 }
 
 @Composable

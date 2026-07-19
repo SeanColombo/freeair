@@ -50,7 +50,8 @@ Note to AI:
 - [ ] Release polish:
   - [X] App icon
   - [X] Make Google Play Store account
-  - [ ] About page
+  - [X] About page (hamburger menu -> About): version, GitHub repo, license, report-an-issue,
+        and privacy policy links. See `PRIVACY.md`.
 - [ ] RELEASE IT PUBLICLY
 
 ## TODO - Further iteration
