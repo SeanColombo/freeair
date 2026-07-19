@@ -47,11 +47,9 @@ Note to AI:
           of fix as the sensor-ID reactivity fix already in place.
     - [X] Entry point in the app's main screen to add a key before any widget triggers the
           setup flow (today it's only reachable via a widget's config screen).
-  - [ ] Need to mention how to delete them (ie: just long press on homescreen and remove)? Or have a drag-left option and trash can?
-- [ ] Make it so opening the app, is a very understandable view to see configuration options. It should be designed in a way to accommodate multiple sensors, but still make tons of sense if there's only 1 sensor since that might be the main use-case.
 - [ ] Release polish:
-  - [ ] App icon
-  - [ ] Make Google Play Store account
+  - [X] App icon
+  - [X] Make Google Play Store account
   - [ ] About page
 - [ ] RELEASE IT PUBLICLY
 
