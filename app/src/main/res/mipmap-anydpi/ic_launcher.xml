@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- foreground/monochrome are a blank transparent bitmap: the artwork isn't laid out for the
+     adaptive-icon safe zone, so it all lives in background instead (means themed/Material You
+     icon mode currently renders as a blank tinted circle, fine for now, revisit if it matters).
+     Must be a real bitmap, not an empty vector: an empty vector silently breaks icon loading,
+     and Android falls back to the default system icon instead of throwing a visible error. -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@drawable/ic_launcher_background" />
     <foreground android:drawable="@drawable/ic_launcher_foreground" />
