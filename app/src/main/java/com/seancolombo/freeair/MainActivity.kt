@@ -131,8 +131,11 @@ private fun EmptyState(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
     ) {
+        // A true 50/50 vertical center (Arrangement.Center) puts this block's midpoint at
+        // screen-center, which reads as too low since the block itself has real height (title +
+        // subtitle + card). Biasing the split upward keeps it feeling centered without that.
+        Spacer(modifier = Modifier.weight(0.4f))
         Text(
             text = "No FreeAir widgets yet",
             style = MaterialTheme.typography.titleMedium,
@@ -144,5 +147,6 @@ private fun EmptyState(modifier: Modifier = Modifier) {
         )
         Spacer(modifier = Modifier.height(16.dp))
         AddWidgetCard(modifier = Modifier.fillMaxWidth())
+        Spacer(modifier = Modifier.weight(0.6f))
     }
 }
