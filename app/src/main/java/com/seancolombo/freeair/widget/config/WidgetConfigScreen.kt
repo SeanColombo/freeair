@@ -1,5 +1,7 @@
 package com.seancolombo.freeair.widget.config
 
+import android.content.Intent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -25,14 +29,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.LinkInteractionListener
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.glance.appwidget.GlanceAppWidgetManager
+import com.seancolombo.freeair.R
 import com.seancolombo.freeair.widget.WidgetErrorMessageFormatter
 import com.seancolombo.freeair.widget.loadApiKey
 import com.seancolombo.freeair.widget.loadCachedWidgetError
 import com.seancolombo.freeair.widget.loadWidgetSensorConfig
 import com.seancolombo.freeair.widget.saveWidgetSensorConfig
 import kotlinx.coroutines.launch
+
+private const val PURPLEAIR_MAP_URL = "https://map.purpleair.com/"
 
 /**
  * The one config surface both entry points converge on: the system launches this (via
@@ -102,8 +118,9 @@ private fun SensorIdConfigScreen(
     }
 
     val coroutineScope = rememberCoroutineScope()
+    var showHelpImage by remember { mutableStateOf(false) }
     Column(
-        modifier = modifier.fillMaxSize().padding(24.dp),
+        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(text = "Configure widget", style = MaterialTheme.typography.headlineSmall)
@@ -125,7 +142,12 @@ private fun SensorIdConfigScreen(
             value = currentModel.sensorId,
             onValueChange = currentModel::onSensorIdChanged,
             label = { Text("Sensor ID") },
-            supportingText = { Text("Find this in your sensor's PurpleAir map URL.") },
+            supportingText = {
+                SensorIdSupportingText(
+                    showHelpImage = showHelpImage,
+                    onToggleHelpImage = { showHelpImage = !showHelpImage },
+                )
+            },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -148,5 +170,43 @@ private fun SensorIdConfigScreen(
                 Text("Save")
             }
         }
+        // Shown below Cancel/Save (rather than replacing the form) so the map-URL link in the
+        // supporting text above stays reachable at the same time as the screenshot.
+        if (showHelpImage) {
+            Image(
+                painter = painterResource(R.drawable.sensor_id_help),
+                contentDescription = "Screenshot of the PurpleAir sensor page: tap \"Get This " +
+                    "Widget\", then look for the number embedded in the code that appears " +
+                    "(e.g. \"PurpleAirWidget_123456_...\") -- that number is the sensor ID.",
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
+}
+
+@Composable
+private fun SensorIdSupportingText(showHelpImage: Boolean, onToggleHelpImage: () -> Unit) {
+    val context = LocalContext.current
+    val linkStyles = TextLinkStyles(
+        style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline),
+    )
+    val openMapUrlListener = LinkInteractionListener {
+        context.startActivity(Intent(Intent.ACTION_VIEW, PURPLEAIR_MAP_URL.toUri()))
+    }
+    val toggleHelpImageListener = LinkInteractionListener { onToggleHelpImage() }
+    val text = buildAnnotatedString {
+        append("Find this in your sensor's ")
+        withLink(
+            LinkAnnotation.Clickable(tag = "map_url", styles = linkStyles, linkInteractionListener = openMapUrlListener),
+        ) {
+            append("PurpleAir map URL")
+        }
+        append(". ")
+        withLink(
+            LinkAnnotation.Clickable(tag = "help", styles = linkStyles, linkInteractionListener = toggleHelpImageListener),
+        ) {
+            append(if (showHelpImage) "Hide help image." else "Need help finding it?")
+        }
+    }
+    Text(text = text, style = MaterialTheme.typography.bodySmall)
 }
