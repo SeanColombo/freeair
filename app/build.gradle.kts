@@ -12,6 +12,10 @@ val localProperties = Properties().apply {
     }
 }
 
+// Only set on machines with the upload keystore configured in local.properties -- release builds
+// stay buildable (just unsigned) without it, so other contributors aren't blocked.
+val releaseKeystorePath = localProperties.getProperty("release.keystore.path")
+
 android {
     namespace = "com.seancolombo.freeair"
     compileSdk {
@@ -42,10 +46,24 @@ android {
         )
     }
 
+    signingConfigs {
+        if (releaseKeystorePath != null) {
+            create("release") {
+                storeFile = rootProject.file(releaseKeystorePath)
+                storePassword = localProperties.getProperty("release.keystore.storePassword")
+                keyAlias = localProperties.getProperty("release.keystore.alias")
+                keyPassword = localProperties.getProperty("release.keystore.keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             optimization {
                 enable = false
+            }
+            if (releaseKeystorePath != null) {
+                signingConfig = signingConfigs.getByName("release")
             }
         }
     }
