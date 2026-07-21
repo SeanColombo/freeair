@@ -51,17 +51,33 @@ import kotlinx.coroutines.launch
 private const val PURPLEAIR_MAP_URL = "https://map.purpleair.com/"
 
 /**
+ * True when a widget that's already configured is being (re)launched by something other than a
+ * deliberate in-app request -- see [WidgetConfigScreen]'s doc comment for why that happens (some
+ * launchers re-fire `WidgetPinner`'s `successCallback` more than once). Pulled out of
+ * [SensorIdConfigScreen]'s `LaunchedEffect` as a plain function so this decision rule is
+ * unit-testable without Robolectric or Compose test infra -- neither reliably drives a
+ * Composable's `LaunchedEffect` in this project's current test setup.
+ */
+internal fun shouldSkipRedundantRelaunch(isExplicitRequest: Boolean, currentSensorId: String): Boolean =
+    !isExplicitRequest && currentSensorId.isNotBlank()
+
+/**
  * The one config surface both entry points converge on: the system launches this (via
  * `WidgetConfigActivity`) right after a user drags the widget onto their home screen, and
  * tapping an existing widget's preview card in [com.seancolombo.freeair.MainActivity] opens
  * the same screen in "edit" mode for that instance.
  *
  * Shows [ApiKeySetupScreen] first if no PurpleAir API key has been saved yet (app-global, shared
- * by every widget), then [SensorIdConfigScreen] for the per-widget sensor ID.
+ * by every widget), then [SensorIdConfigScreen] for the per-widget sensor ID. [isExplicitRequest]
+ * (false only for the system-built launches -- see [WidgetConfigActivity]) lets
+ * [SensorIdConfigScreen] silently finish instead of showing the form again for a widget that's
+ * already configured, since some launchers re-fire `WidgetPinner`'s `successCallback` more than
+ * once, well after the user already finished setup through it the first time.
  */
 @Composable
 fun WidgetConfigScreen(
     appWidgetId: Int,
+    isExplicitRequest: Boolean,
     onSaved: () -> Unit,
     onCancelled: () -> Unit,
     modifier: Modifier = Modifier,
@@ -80,6 +96,7 @@ fun WidgetConfigScreen(
         false -> ApiKeySetupScreen(onContinue = { hasApiKey = true }, modifier = modifier)
         true -> SensorIdConfigScreen(
             appWidgetId = appWidgetId,
+            isExplicitRequest = isExplicitRequest,
             onSaved = onSaved,
             onCancelled = onCancelled,
             modifier = modifier,
@@ -90,17 +107,27 @@ fun WidgetConfigScreen(
 @Composable
 private fun SensorIdConfigScreen(
     appWidgetId: Int,
+    isExplicitRequest: Boolean,
     onSaved: () -> Unit,
     onCancelled: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     var model by remember { mutableStateOf<WidgetConfigModel?>(null) }
+    var alreadyConfigured by remember { mutableStateOf(false) }
     var lastErrorMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(appWidgetId) {
         val glanceId = GlanceAppWidgetManager(context).getGlanceIdBy(appWidgetId)
         val currentSensorId = loadWidgetSensorConfig(context, glanceId).sensorId
+
+        if (shouldSkipRedundantRelaunch(isExplicitRequest, currentSensorId)) {
+            // A system-triggered relaunch (not a deliberate tap-to-edit) for a widget that's
+            // already configured -- nothing to do, so finish quietly rather than show the form
+            // again with no obvious reason why.
+            alreadyConfigured = true
+            return@LaunchedEffect
+        }
         lastErrorMessage = loadCachedWidgetError(context, glanceId)
             ?.let { WidgetErrorMessageFormatter.format(it.message, currentSensorId) }
         model = WidgetConfigModel(
@@ -109,6 +136,11 @@ private fun SensorIdConfigScreen(
         )
     }
 
+    LaunchedEffect(alreadyConfigured) {
+        if (alreadyConfigured) onSaved()
+    }
+
+    // Also covers the brief window while alreadyConfigured is being determined.
     val currentModel = model
     if (currentModel == null) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
