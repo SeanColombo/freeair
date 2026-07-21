@@ -32,18 +32,6 @@ android {
         versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        // Sourced from the gitignored local.properties so real credentials are never committed.
-        buildConfigField(
-            "String",
-            "PURPLEAIR_API_KEY",
-            "\"${localProperties.getProperty("purpleair.apiKey", "")}\"",
-        )
-        buildConfigField(
-            "String",
-            "PURPLEAIR_SENSOR_ID",
-            "\"${localProperties.getProperty("purpleair.sensorId", "")}\"",
-        )
     }
 
     signingConfigs {
@@ -58,6 +46,22 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Sourced from the gitignored local.properties, and deliberately kept out of the
+            // release build type entirely (not just unused) -- real credentials must never end
+            // up compiled into a shipped artifact. Only PurpleAirIntegrationTest reads these,
+            // and integration tests always run against the debug variant's classpath.
+            buildConfigField(
+                "String",
+                "PURPLEAIR_API_KEY",
+                "\"${localProperties.getProperty("purpleair.apiKey", "")}\"",
+            )
+            buildConfigField(
+                "String",
+                "PURPLEAIR_SENSOR_ID",
+                "\"${localProperties.getProperty("purpleair.sensorId", "")}\"",
+            )
+        }
         release {
             optimization {
                 enable = false
