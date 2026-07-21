@@ -16,50 +16,16 @@ purpleair.sensorId=a-sensor-id-you-can-read
 ```
 
 Without these set, the integration test(s) skip automatically rather than failing. The app
-itself no longer uses a build-time API key at all -- each user enters their own via the in-app
-setup flow (see `ApiKeyStore`) -- `local.properties`'s `purpleair.apiKey` is purely a
-convenience for local test runs and for pre-filling the sensor ID field during development.
+itself no longer uses a build-time API key or sensor ID at all -- each user enters their own via
+the in-app setup flow (see `ApiKeyStore`) -- `local.properties`'s `purpleair.apiKey`/`sensorId`
+are purely for local integration test runs. The sensor ID config screen intentionally starts
+blank for everyone, dev included, so local testing matches the real user experience.
 
-Note to AI:
-* Keep in mind that we want this to support multiple sensors in the future (so someone who owns more than one sensor could have a widget for each one on his screen), so architect in a way to allow that.
-
-## TODO - Initial release
-- [X] Create project and get it running.
-- [X] Get a widget to be extant. Hello World on it.
-- [X] Wire up Purple Air to make a hardcoded request to get the data we need. If this involves the API key, make sure that isn't committed to the project.
-- [X] Once proof-of-concept is done, get it rendering the way we'd expect.
-- [X] Set the correct update-cadence, caching, etc. behavior and test it.
-- [X] Pull out any API keys so that we can now commit the rest to github (could just have it in a gitignored file for now).
-- [X] Figure out if we can make it so that tapping the widget opens up the PurpleAir mobile-web page.
-- [X] Create a low-lift setup flow. This will be challenging, make it very clear to the user, and require minimal effort.
-  - [X] Get the person's sensor ID
-    - [X] Help them find it... picture or something, but behind a "where to look?" link. Built as
-          a "Need help finding it?" link next to the Sensor ID field, toggling an inline
-          screenshot (below the Cancel/Save buttons) with the "Get This Widget" + sensor ID steps
-          circled -- the "PurpleAir map URL" link stays visible/clickable at the same time. Also
-          made the field itself resilient to pasted HTML/URL/underscore-wrapped junk
-          (`PurpleAirWidgetCodeParser`).
-  - [X] Help the user get an API key from PurpleAir and put it into the app. Built as a one-time,
-        app-global setup screen (`ApiKeySetupScreen`/`ApiKeySetupModel`/`ApiKeyStore`) shown in
-        place of the sensor-ID form whenever no key has been saved yet -- verifies the key
-        against PurpleAir's own "check API key" endpoint before accepting it.
-    - [X] Entry point to let the user change an already-saved key later. **Note:** when this gets
-          built, a widget whose Glance session is still alive when the key changes won't
-          reactively pick up the new value -- see the TODO comment in `ApiKeyStore.kt` for why
-          (the key lives in a separate DataStore that Glance's `currentState()`/session
-          reactivity doesn't observe, unlike per-widget sensor config). Will need the same kind
-          of fix as the sensor-ID reactivity fix already in place.
-    - [X] Entry point in the app's main screen to add a key before any widget triggers the
-          setup flow (today it's only reachable via a widget's config screen).
-- [X] Release polish:
-  - [X] App icon
-  - [X] Make Google Play Store account
-  - [X] About page (hamburger menu -> About): version, GitHub repo, license, report-an-issue,
-        and privacy policy links. See `PRIVACY.md`.
-- [ ] RELEASE IT PUBLICLY
 
 ## TODO - Further iteration
 - [ ] Add hamburger menu option to rate the app (probably need the app live to get a link for this)
 - [ ] Long-pressing on the Contacts or TickTick widget gave me a Settings option... how can I get that too? If that's available, I'd prefer it over the gear icon.
 - [ ] Add really robust handling of errors (like the sensor not getting data anymore, inability to connect to PurpleAir, etc.). We already have one case for SensorID not found.
 - [ ] Add options for push notifications when the value changes past a certain threshold (ie: the first time you go over 100 without until you go back below 100 or 90 or something), etc..
+- [ ] Consider using R8 for code-obfuscation (it's more like compression in practice). This creates a mapping file that Play Store gets so you can still see where errors are happening.
+- [ ] Investigate if we can skip the API key config section and use our own backend or if that will cost money. On iOS Paku does that but it's got paid features, so they might be paying.
